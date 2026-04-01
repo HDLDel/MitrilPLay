@@ -1,4 +1,4 @@
-import 'package:open_tv/models/node.dart';
+import 'package:mitril_play/models/node.dart';
 
 class Stack {
   final List<Node> _nodes = [];

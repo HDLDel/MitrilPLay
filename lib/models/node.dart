@@ -1,4 +1,4 @@
-import 'package:open_tv/models/node_type.dart';
+import 'package:mitril_play/models/node_type.dart';
 
 class Node {
   final int id;

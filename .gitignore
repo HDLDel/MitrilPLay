@@ -6,12 +6,71 @@
 *.lock
 *.log
 *.pyc
+*.pyo
 *.swp
 .DS_Store
+Thumbs.db
 .atom/
 .buildlog/
 .history
 .svn/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+*.egg
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+.venv/
+
+# Python IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+
+# Logs
+logs/
+*.log
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Sensitive configuration files
+config.json
+*.conf
+.env
+.env.*
+*.env
+*.enc
+*.key
+*.secret
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
 
 # IntelliJ related
 *.iml

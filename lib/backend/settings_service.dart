@@ -1,8 +1,8 @@
 import 'dart:collection';
 
-import 'package:open_tv/backend/sql.dart';
-import 'package:open_tv/models/settings.dart';
-import 'package:open_tv/models/view_type.dart';
+import 'package:mitril_play/backend/sql.dart';
+import 'package:mitril_play/models/settings.dart';
+import 'package:mitril_play/models/view_type.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 const defaultView = "defaultView";
@@ -10,6 +10,7 @@ const refreshOnStart = "refreshOnStart";
 const showLivestreams = "showLivestreams";
 const showMovies = "showMovies";
 const showSeries = "showSeries";
+const themeMode = "themeMode";
 const lastSeenVersion = "lastSeenVersion";
 
 class SettingsService {
@@ -21,6 +22,7 @@ class SettingsService {
     var live = settingsMap[showLivestreams];
     var movies = settingsMap[showMovies];
     var series = settingsMap[showSeries];
+    var theme = settingsMap[themeMode];
     if (view != null) {
       settings.defaultView = ViewType.values[int.parse(view)];
     }
@@ -36,6 +38,9 @@ class SettingsService {
     if (series != null) {
       settings.showSeries = int.parse(series) == 1;
     }
+    if (theme != null) {
+      settings.themeMode = AppThemeMode.values[int.parse(theme)];
+    }
     return settings;
   }
 
@@ -47,6 +52,7 @@ class SettingsService {
         (settings.showLivestreams ? 1 : 0).toString();
     settingsMap[showMovies] = (settings.showMovies ? 1 : 0).toString();
     settingsMap[showSeries] = (settings.showSeries ? 1 : 0).toString();
+    settingsMap[themeMode] = settings.themeMode.index.toString();
     await Sql.updateSettings(settingsMap);
   }
 

@@ -1,5 +1,5 @@
-import 'package:open_tv/models/media_type.dart';
-import 'package:open_tv/models/view_type.dart';
+import 'package:mitril_play/models/media_type.dart';
+import 'package:mitril_play/models/view_type.dart';
 
 class Filters {
   String? query;

@@ -1,5 +1,5 @@
-import 'package:open_tv/models/filters.dart';
-import 'package:open_tv/models/stack.dart';
+import 'package:mitril_play/models/filters.dart';
+import 'package:mitril_play/models/stack.dart';
 
 class Snapshot {
   final Stack stack;

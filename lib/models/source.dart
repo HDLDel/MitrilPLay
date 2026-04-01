@@ -1,4 +1,4 @@
-import 'package:open_tv/models/source_type.dart';
+import 'package:mitril_play/models/source_type.dart';
 
 class Source {
   int? id;

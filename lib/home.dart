@@ -1,21 +1,22 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:open_tv/backend/settings_service.dart';
-import 'package:open_tv/backend/sql.dart';
-import 'package:open_tv/backend/utils.dart';
-import 'package:open_tv/bottom_nav.dart';
-import 'package:open_tv/channel_tile.dart';
-import 'package:open_tv/loading.dart';
-import 'package:open_tv/models/channel.dart';
-import 'package:open_tv/models/filters.dart';
-import 'package:open_tv/models/home_manager.dart';
-import 'package:open_tv/models/no_push_animation_material_page_route.dart';
-import 'package:open_tv/models/node.dart';
-import 'package:open_tv/models/node_type.dart';
-import 'package:open_tv/models/view_type.dart';
-import 'package:open_tv/error.dart';
-import 'package:open_tv/whats_new_modal.dart';
+import 'package:mitril_play/backend/settings_service.dart';
+import 'package:mitril_play/backend/sql.dart';
+import 'package:mitril_play/backend/utils.dart';
+import 'package:mitril_play/bottom_nav.dart';
+import 'package:mitril_play/channel_tile.dart';
+import 'package:mitril_play/loading.dart';
+import 'package:mitril_play/models/channel.dart';
+import 'package:mitril_play/models/filters.dart';
+import 'package:mitril_play/models/home_manager.dart';
+import 'package:mitril_play/models/media_type.dart';
+import 'package:mitril_play/models/no_push_animation_material_page_route.dart';
+import 'package:mitril_play/models/node.dart';
+import 'package:mitril_play/models/node_type.dart';
+import 'package:mitril_play/models/view_type.dart';
+import 'package:mitril_play/error.dart';
+import 'package:mitril_play/whats_new_modal.dart';
 
 class Home extends StatefulWidget {
   final HomeManager home;
@@ -35,6 +36,7 @@ class _HomeState extends State<Home> {
   bool reachedMax = false;
   final int pageSize = 36;
   List<Channel> channels = [];
+  Map<int, String> sourceNames = {}; // Cache de nomes das sources
   bool searchMode = false;
   final FocusNode _focusNode = FocusNode();
   TextEditingController searchController = TextEditingController();
@@ -42,6 +44,20 @@ class _HomeState extends State<Home> {
   bool isLoading = false;
   bool blockSettings = false;
   int? previousScroll;
+  MediaType? _selectedMediaType; // Filtro de tipo de mídia
+
+  Future<String> _getSourceName(int sourceId) async {
+    if (sourceNames.containsKey(sourceId)) {
+      return sourceNames[sourceId]!;
+    }
+    try {
+      final source = await Sql.getSourceFromId(sourceId);
+      sourceNames[sourceId] = source.name;
+      return source.name;
+    } catch (e) {
+      return 'Lista $sourceId';
+    }
+  }
 
   @override
   void initState() {
@@ -59,6 +75,8 @@ class _HomeState extends State<Home> {
       widget.home.filters.mediaTypes =
           (await SettingsService.getSettings()).getMediaTypes();
     }
+    // Inicializar filtro de tipo de mídia
+    _selectedMediaType = null;
     await load();
     final String? version = await SettingsService.shouldShowWhatsNew();
     if (widget.firstLaunch && version != null) {
@@ -99,6 +117,42 @@ class _HomeState extends State<Home> {
     }
   }
 
+  void toggleMediaType(MediaType? type) {
+    setState(() {
+      _selectedMediaType = _selectedMediaType == type ? null : type;
+      widget.home.filters.mediaTypes = _selectedMediaType != null
+          ? [ _selectedMediaType! ]
+          : (MediaType.values.toList()..remove(MediaType.group));
+    });
+    _scrollController.jumpTo(0);
+    load(false);
+  }
+
+  Widget _buildMediaTypeButton({
+    required IconData icon,
+    required String label,
+    required MediaType mediaType,
+  }) {
+    final isSelected = _selectedMediaType == mediaType;
+    return ElevatedButton.icon(
+      onPressed: () => toggleMediaType(mediaType),
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
+        foregroundColor: isSelected
+            ? Theme.of(context).colorScheme.onPrimary
+            : Theme.of(context).colorScheme.onSurface,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
   Future<void> load([bool more = false]) async {
     if (more) {
       widget.home.filters.page++;
@@ -111,10 +165,24 @@ class _HomeState extends State<Home> {
         setState(() {
           this.channels = channels;
         });
+        // Carregar nomes das sources
+        final uniqueSourceIds = channels.map((c) => c.sourceId).toSet();
+        for (final sourceId in uniqueSourceIds) {
+          if (!sourceNames.containsKey(sourceId)) {
+            await _getSourceName(sourceId);
+          }
+        }
       } else {
         setState(() {
           this.channels.addAll(channels);
         });
+        // Carregar nomes das sources dos novos canais
+        final uniqueSourceIds = channels.map((c) => c.sourceId).toSet();
+        for (final sourceId in uniqueSourceIds) {
+          if (!sourceNames.containsKey(sourceId)) {
+            await _getSourceName(sourceId);
+          }
+        }
       }
       reachedMax = channels.length < pageSize;
     }, context);
@@ -269,6 +337,33 @@ class _HomeState extends State<Home> {
                           ),
                         )
                       : const SizedBox.shrink()),
+              // Filtros de tipo de mídia (TV, Filmes, Séries)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildMediaTypeButton(
+                      icon: Icons.live_tv,
+                      label: 'TV',
+                      mediaType: MediaType.livestream,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildMediaTypeButton(
+                      icon: Icons.movie,
+                      label: 'Filmes',
+                      mediaType: MediaType.movie,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildMediaTypeButton(
+                      icon: Icons.video_library,
+                      label: 'Séries',
+                      mediaType: MediaType.serie,
+                    ),
+                  ],
+                ),
+              ),
               Expanded(
                   child: GridView.builder(
                 shrinkWrap: true,
@@ -276,17 +371,19 @@ class _HomeState extends State<Home> {
                 padding: const EdgeInsets.fromLTRB(16, 15, 16, 5),
                 itemCount: channels.length,
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 315,
-                  mainAxisExtent: 120,
+                  maxCrossAxisExtent: 400,
+                  mainAxisExtent: 220,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
                 ),
                 itemBuilder: (context, index) {
                   final channel = channels[index];
+                  final sourceName = sourceNames[channel.sourceId] ?? 'Lista';
                   return ChannelTile(
                     channel: channel,
                     parentContext: context,
                     setNode: setNode,
+                    groupName: sourceName,
                   );
                 },
               )),

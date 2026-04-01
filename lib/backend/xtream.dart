@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:open_tv/backend/sql.dart';
-import 'package:open_tv/models/channel.dart';
-import 'package:open_tv/models/channel_preserve.dart';
-import 'package:open_tv/models/media_type.dart';
-import 'package:open_tv/models/source.dart';
-import 'package:open_tv/models/xtream_types.dart';
+import 'package:mitril_play/backend/sql.dart';
+import 'package:mitril_play/models/channel.dart';
+import 'package:mitril_play/models/channel_preserve.dart';
+import 'package:mitril_play/models/media_type.dart';
+import 'package:mitril_play/models/source.dart';
+import 'package:mitril_play/models/xtream_types.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 import 'package:http/http.dart' as http;
 
@@ -179,11 +179,11 @@ Future<void> getEpisodes(Channel channel) async {
           getSeriesInfo, source, {'series_id': seriesId.toString()}))
       .episodes;
   episodes.sort((a, b) {
-    int seasonComparison = a.season.compareTo(b.season);
+    int seasonComparison = int.tryParse(a.season)?.compareTo(int.tryParse(b.season) ?? 0) ?? a.season.compareTo(b.season);
     if (seasonComparison != 0) {
       return seasonComparison;
     }
-    return a.episodeNum.compareTo(b.episodeNum);
+    return (int.tryParse(a.episodeNum) ?? 0).compareTo(int.tryParse(b.episodeNum) ?? 0);
   });
   for (var episode in episodes) {
     try {

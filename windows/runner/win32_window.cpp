@@ -187,6 +187,16 @@ Win32Window::MessageHandler(HWND hwnd,
       }
       return 0;
 
+    case WM_GETMINMAXINFO: {
+      // Define tamanho minimo e maximo da janela
+      MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lparam);
+      info->ptMinTrackSize.x = 800;   // Largura minima
+      info->ptMinTrackSize.y = 600;   // Altura minima
+      info->ptMaxTrackSize.x = 2560;  // Largura maxima
+      info->ptMaxTrackSize.y = 1440;  // Altura maxima
+      return 0;
+    }
+
     case WM_DPICHANGED: {
       auto newRectSize = reinterpret_cast<RECT*>(lparam);
       LONG newWidth = newRectSize->right - newRectSize->left;

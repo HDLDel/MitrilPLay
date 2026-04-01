@@ -1,6 +1,6 @@
-import 'package:open_tv/models/filters.dart';
-import 'package:open_tv/models/node.dart';
-import 'package:open_tv/models/view_type.dart';
+import 'package:mitril_play/models/filters.dart';
+import 'package:mitril_play/models/node.dart';
+import 'package:mitril_play/models/view_type.dart';
 
 class HomeManager {
   final Filters filters;

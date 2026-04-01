@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:open_tv/backend/sql.dart';
-import 'package:open_tv/backend/utils.dart';
-import 'package:open_tv/models/channel.dart';
-import 'package:open_tv/models/channel_http_headers.dart';
-import 'package:open_tv/models/channel_preserve.dart';
-import 'package:open_tv/models/media_type.dart';
-import 'package:open_tv/models/source.dart';
+import 'package:mitril_play/backend/sql.dart';
+import 'package:mitril_play/backend/utils.dart';
+import 'package:mitril_play/models/channel.dart';
+import 'package:mitril_play/models/channel_http_headers.dart';
+import 'package:mitril_play/models/channel_preserve.dart';
+import 'package:mitril_play/models/media_type.dart';
+import 'package:mitril_play/models/source.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 import 'package:http/http.dart' as http;
 

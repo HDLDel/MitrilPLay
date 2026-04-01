@@ -1,4 +1,4 @@
-import 'package:open_tv/backend/utils.dart';
+import 'package:mitril_play/backend/utils.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 
 class DbFactory {

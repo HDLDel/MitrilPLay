@@ -2,15 +2,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:open_tv/backend/sql.dart';
-import 'package:open_tv/backend/utils.dart';
-import 'package:open_tv/correction_modal.dart';
-import 'package:open_tv/home.dart';
-import 'package:open_tv/loading.dart';
-import 'package:open_tv/models/home_manager.dart';
-import 'package:open_tv/models/source.dart';
-import 'package:open_tv/models/source_type.dart';
-import 'package:open_tv/error.dart';
+import 'package:mitril_play/backend/sql.dart';
+import 'package:mitril_play/backend/utils.dart';
+import 'package:mitril_play/correction_modal.dart';
+import 'package:mitril_play/home.dart';
+import 'package:mitril_play/loading.dart';
+import 'package:mitril_play/models/home_manager.dart';
+import 'package:mitril_play/models/source.dart';
+import 'package:mitril_play/models/source_type.dart';
+import 'package:mitril_play/error.dart';
 
 class Setup extends StatefulWidget {
   final bool showAppBar;

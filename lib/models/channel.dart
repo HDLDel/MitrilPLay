@@ -1,4 +1,4 @@
-import 'package:open_tv/models/media_type.dart';
+import 'package:mitril_play/models/media_type.dart';
 
 class Channel {
   int? id;

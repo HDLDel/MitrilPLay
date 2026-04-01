@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:open_tv/backend/settings_service.dart';
+import 'package:mitril_play/backend/settings_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WhatsNewModal extends StatelessWidget {
@@ -35,13 +35,13 @@ class WhatsNewModal extends StatelessWidget {
                   padding: EdgeInsets.only(right: 8.0),
                   child: const Text(
                     '''
-Hi! Thanks for supporting Open TV. Here's everything new:
+Hi! Thanks for supporting MitrilPlay. Here's everything new:
 
-- Fixed some streams not playing by adding support for HTTP headers. Some streams still might still not play; I am actively working on it. Please open a issue on GitHub if you are experiencing playback issues.
+- Fixed some streams not playing by adding support for HTTP headers. Some streams may still not play; I am actively working on it. Please open an issue on GitHub if you are experiencing playback issues.
 - Added aspect ratio button for filling the entire screen
 - Added media type filtering for categories
 
-If you like Open TV, please consider donating (Even a dollar helps tremendously), reporting issues on the github and sharing it with your friends.
+If you like MitrilPlay, please consider donating (Even a dollar helps tremendously), reporting issues on the github and sharing it with your friends.
 ''',
                   ))),
         ));

@@ -1,15 +1,15 @@
 import 'dart:collection';
 
-import 'package:open_tv/backend/db_factory.dart';
-import 'package:open_tv/models/channel.dart';
-import 'package:open_tv/models/channel_http_headers.dart';
-import 'package:open_tv/models/channel_preserve.dart';
-import 'package:open_tv/models/filters.dart';
-import 'package:open_tv/models/id_data.dart';
-import 'package:open_tv/models/media_type.dart';
-import 'package:open_tv/models/source.dart';
-import 'package:open_tv/models/source_type.dart';
-import 'package:open_tv/models/view_type.dart';
+import 'package:mitril_play/backend/db_factory.dart';
+import 'package:mitril_play/models/channel.dart';
+import 'package:mitril_play/models/channel_http_headers.dart';
+import 'package:mitril_play/models/channel_preserve.dart';
+import 'package:mitril_play/models/filters.dart';
+import 'package:mitril_play/models/id_data.dart';
+import 'package:mitril_play/models/media_type.dart';
+import 'package:mitril_play/models/source.dart';
+import 'package:mitril_play/models/source_type.dart';
+import 'package:mitril_play/models/view_type.dart';
 import 'package:sqlite_async/sqlite3.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 
@@ -106,6 +106,28 @@ class Sql {
         LIMIT 1
     ''', [channelId]);
     return result != null ? _rowToHeaders(result) : null;
+  }
+
+  static Future<Channel?> getChannel(int channelId) async {
+    var db = await DbFactory.db;
+    var result = await db.getOptional('''
+        SELECT * FROM channels
+        WHERE id = ?
+        LIMIT 1
+    ''', [channelId]);
+    if (result == null) return null;
+    
+    return Channel(
+      id: result.columnAt(0),
+      name: result.columnAt(1),
+      url: result.columnAt(2),
+      image: result.columnAt(3),
+      mediaType: MediaType.values[result.columnAt(4)],
+      favorite: result.columnAt(5) == 1,
+      sourceId: result.columnAt(6),
+      groupId: result.columnAt(7),
+      seriesId: result.columnAt(8),
+    );
   }
 
   static ChannelHttpHeaders _rowToHeaders(Row row) {

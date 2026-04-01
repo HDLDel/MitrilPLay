@@ -1,5 +1,5 @@
-import 'package:open_tv/models/exceptions/invalid_value_exception.dart';
-import 'package:open_tv/models/media_type.dart';
+import 'package:mitril_play/models/exceptions/invalid_value_exception.dart';
+import 'package:mitril_play/models/media_type.dart';
 
 enum NodeType { category, series }
 

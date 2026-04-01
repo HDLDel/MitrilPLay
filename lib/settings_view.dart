@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:open_tv/backend/settings_service.dart';
-import 'package:open_tv/backend/sql.dart';
-import 'package:open_tv/backend/utils.dart';
-import 'package:open_tv/bottom_nav.dart';
-import 'package:open_tv/confirm_delete.dart';
-import 'package:open_tv/models/filters.dart';
-import 'package:open_tv/select_dialog.dart';
-import 'package:open_tv/edit_dialog.dart';
-import 'package:open_tv/home.dart';
-import 'package:open_tv/loading.dart';
-import 'package:open_tv/models/home_manager.dart';
-import 'package:open_tv/models/id_data.dart';
-import 'package:open_tv/models/settings.dart';
-import 'package:open_tv/models/source.dart';
-import 'package:open_tv/models/source_type.dart';
-import 'package:open_tv/models/view_type.dart';
-import 'package:open_tv/error.dart';
-import 'package:open_tv/setup.dart';
+import 'package:mitril_play/backend/settings_service.dart';
+import 'package:mitril_play/backend/sql.dart';
+import 'package:mitril_play/backend/utils.dart';
+import 'package:mitril_play/bottom_nav.dart';
+import 'package:mitril_play/confirm_delete.dart';
+import 'package:mitril_play/models/filters.dart';
+import 'package:mitril_play/select_dialog.dart';
+import 'package:mitril_play/edit_dialog.dart';
+import 'package:mitril_play/home.dart';
+import 'package:mitril_play/loading.dart';
+import 'package:mitril_play/models/home_manager.dart';
+import 'package:mitril_play/models/id_data.dart';
+import 'package:mitril_play/models/settings.dart';
+import 'package:mitril_play/models/source.dart';
+import 'package:mitril_play/models/source_type.dart';
+import 'package:mitril_play/models/view_type.dart';
+import 'package:mitril_play/error.dart';
+import 'package:mitril_play/setup.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsView extends StatefulWidget {
@@ -90,6 +90,37 @@ class _SettingsState extends State<SettingsView> {
                 Navigator.of(context).pop();
               });
         });
+  }
+
+  Future<void> _showThemeDialog(BuildContext context) async {
+    showDialog(
+        barrierDismissible: true,
+        context: context,
+        builder: (BuildContext context) {
+          return SelectDialog(
+              title: "Theme",
+              data: AppThemeMode.values
+                  .map((x) => IdData(id: x.index, data: themeModeToString(x)))
+                  .toList(),
+              action: (themeIndex) {
+                setState(() {
+                  settings.themeMode = AppThemeMode.values[themeIndex];
+                  updateSettings();
+                });
+                Navigator.of(context).pop();
+              });
+        });
+  }
+
+  String themeModeToString(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.light:
+        return "Light";
+      case AppThemeMode.dark:
+        return "Dark";
+      case AppThemeMode.black:
+        return "Black (AMOLED)";
+    }
   }
 
   Future<void> toggleSource(Source source) async {
@@ -200,7 +231,7 @@ class _SettingsState extends State<SettingsView> {
                           ListTile(
                               title: const Text("Donate"),
                               subtitle: const Text(
-                                  "Open TV needs your help! Consider donating ❤️"),
+                                  "MitrilPlay needs your help! Consider donating ❤️"),
                               onTap: () async => await launchUrl(
                                   Uri.parse(
                                     "https://github.com/Fredolx/open-tv-mobile/discussions/1",
@@ -212,6 +243,12 @@ class _SettingsState extends State<SettingsView> {
                                   Text(viewTypeToString(settings.defaultView)),
                               onTap: () async =>
                                   await _showDefaultViewDialog(context)),
+                          ListTile(
+                              title: const Text("Theme"),
+                              subtitle:
+                                  Text(themeModeToString(settings.themeMode)),
+                              onTap: () async =>
+                                  await _showThemeDialog(context)),
                           ListTile(
                             title: const Text("Refresh sources on start"),
                             trailing: Row(
