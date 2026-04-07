@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==============================================================================
+# build-linux.sh - Compila o MitrilPlay para Linux (build nativo)
+# ==============================================================================
+# Executa o build de release do Flutter para Linux, gerando executável nativo.
+# Requer dependências instaladas (gtk3, clang, cmake, etc). Verifique
+# install-deps-linux.sh ou install-deps-bazzite.sh para instalar pré-requisitos.
+# ==============================================================================
 
 # Script de compilação para MitrilPlay (Linux)
 # Requisitos: Dependências instaladas (veja install-deps-bazzite.sh)

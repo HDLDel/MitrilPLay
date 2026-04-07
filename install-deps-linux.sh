@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==============================================================================
+# install-deps-linux.sh - Instala dependências para compilar no Linux genérico
+# ==============================================================================
+# Detecta automaticamente a distribuição (Fedora/RHEL, Ubuntu/Debian, Arch)
+# e instala todas as dependências necessárias: Flutter, GTK3, MPV, clang,
+# cmake, ninja, etc. Executar com sudo: sudo ./install-deps-linux.sh
+# ==============================================================================
 
 # Script de instalação de dependências para compilar ASTRO-TV no Linux
 # Suporta: Fedora/RHEL (dnf) e Ubuntu/Debian (apt)

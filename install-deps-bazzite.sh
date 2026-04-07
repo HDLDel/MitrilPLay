@@ -1,4 +1,12 @@
 #!/bin/bash
+# ==============================================================================
+# install-deps-bazzite.sh - Instala dependências para compilar no Bazzite OS
+# ==============================================================================
+# Script específico para Bazzite/Silverblue/Bluefin (sistemas ostree).
+# Instala Homebrew, Flutter SDK e dependências via rpm-ostree (gtk3, mpv,
+# clang, cmake, etc). NÃO executar como root - o script usa sudo quando necessário.
+# Requer reinício após instalação para aplicar camadas rpm-ostree.
+# ==============================================================================
 
 # Script de instalação de dependências para compilar MitrilPlay no Bazzite
 # Bazzite é baseado em Fedora Silverblue/Bluefin (ostree)

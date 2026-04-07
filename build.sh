@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==============================================================================
+# build.sh - Compila o MitrilPlay para Windows ou Linux (multi-plataforma)
+# ==============================================================================
+# Script de build multi-plataforma que detecta o SO ou aceita argumento para
+# compilar para Linux ou Windows especificamente. Requer Flutter SDK instalado.
+# Use: bash build.sh linux ou bash build.sh windows para plataforma específica.
+# ==============================================================================
 
 # Script de compilação para ASTRO-TV (Windows e Linux)
 # Requisitos: Flutter SDK instalado e configurado

@@ -1,4 +1,12 @@
 @echo off
+REM ============================================================================
+REM build.bat - Compila o MitrilPlay para Windows
+REM ============================================================================
+REM Script de build para Windows que limpa, obtém dependências e compila o
+REM projeto Flutter. Gera executável em build\windows\x64\runner\Release\.
+REM Requer Flutter SDK no PATH e players (mpv/vlc) na pasta Players.
+REM ============================================================================
+
 REM Build script for ASTRO-TV (Windows)
 
 REM Add Flutter to PATH

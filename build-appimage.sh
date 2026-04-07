@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==============================================================================
+# build-appimage.sh - Cria um AppImage portátil do MitrilPlay para Linux
+# ==============================================================================
+# Gera um AppImage único que roda em qualquer distribuição Linux x86_64 sem
+# instalação. Ideal para Bazzite/Silverblue/Bluefin (sistemas baseados em ostree).
+# Baixa linuxdeploy automaticamente e empacota o build Flutter com dependências.
+# ==============================================================================
 
 # Script de compilação para MitrilPlay - AppImage (Linux)
 # Gera um AppImage que roda em qualquer distribuição Linux x86_64

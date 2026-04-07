@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==============================================================================
+# create-dist.sh - Cria pacote de distribuição do MitrilPlay para Linux
+# ==============================================================================
+# Copia o build compilado para pasta dist/, cria estrutura com pasta Players
+# e gera arquivo LEIAME.md com instruções de uso e dependências. Requer que
+# o build tenha sido executado antes com build-linux.sh.
+# ==============================================================================
 
 # Script para criar pacote de distribuição do ASTRO-TV
 

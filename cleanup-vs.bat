@@ -1,4 +1,12 @@
 @echo off
+REM ============================================================================
+REM cleanup-vs.bat - Remove Visual Studio Build Tools e componentes
+REM ============================================================================
+REM Script de limpeza que remove completamente o Visual Studio Build Tools,
+REM incluindo compilador C++, Windows SDK, CMake e entradas de registro.
+REM Executar como Administrador. Útil para liberar espaço ou resolver conflitos.
+REM ============================================================================
+
 REM Script para remover componentes do Visual Studio Build Tools
 REM Executar como Administrador
 
