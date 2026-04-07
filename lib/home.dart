@@ -14,6 +14,8 @@ import 'package:mitril_play/models/media_type.dart';
 import 'package:mitril_play/models/no_push_animation_material_page_route.dart';
 import 'package:mitril_play/models/node.dart';
 import 'package:mitril_play/models/node_type.dart';
+import 'package:mitril_play/models/source.dart';
+import 'package:mitril_play/models/source_type.dart';
 import 'package:mitril_play/models/view_type.dart';
 import 'package:mitril_play/error.dart';
 import 'package:mitril_play/whats_new_modal.dart';
@@ -37,6 +39,8 @@ class _HomeState extends State<Home> {
   final int pageSize = 36;
   List<Channel> channels = [];
   Map<int, String> sourceNames = {}; // Cache de nomes das sources
+  List<Source> allSources = []; // Todas as fontes disponíveis
+  Set<int> selectedSourceIds = {}; // Fontes selecionadas (vazio = todas)
   bool searchMode = false;
   final FocusNode _focusNode = FocusNode();
   TextEditingController searchController = TextEditingController();
@@ -59,6 +63,151 @@ class _HomeState extends State<Home> {
     }
   }
 
+  Future<void> _loadSources() async {
+    try {
+      final sources = await Sql.getSources();
+      setState(() {
+        allSources = sources.where((s) => s.enabled).toList();
+      });
+    } catch (e) {
+      // Ignorar erro silenciosamente
+    }
+  }
+
+  void _showSourceFilter() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Filtrar por Listas',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Opção para selecionar todas
+                  ListTile(
+                    leading: Icon(
+                      selectedSourceIds.isEmpty
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      color: selectedSourceIds.isEmpty
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    title: const Text('Todas as listas'),
+                    trailing: Switch(
+                      value: selectedSourceIds.isEmpty,
+                      onChanged: (_) {
+                        setState(() {
+                          selectedSourceIds.clear();
+                        });
+                        setModalState(() {});
+                      },
+                    ),
+                  ),
+                  const Divider(),
+                  const Text(
+                    'Selecione uma ou mais listas para filtrar:',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  // Lista de fontes com switches
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: allSources.length,
+                      itemBuilder: (context, index) {
+                        final source = allSources[index];
+                        final isSelected = selectedSourceIds.isEmpty
+                            ? true
+                            : selectedSourceIds.contains(source.id);
+                        return ListTile(
+                          leading: Icon(
+                            Icons.list_alt,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
+                          title: Text(source.name),
+                          subtitle: Text(
+                            getSourceTypeString(source.sourceType),
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          trailing: Switch(
+                            value: isSelected,
+                            onChanged: (value) {
+                              setState(() {
+                                if (value) {
+                                  selectedSourceIds.add(source.id!);
+                                } else {
+                                  selectedSourceIds.remove(source.id);
+                                }
+                              });
+                              setModalState(() {});
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Botão aplicar
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _applySourceFilter();
+                    },
+                    child: Text(
+                      selectedSourceIds.isEmpty
+                          ? 'Mostrar todas as listas'
+                          : 'Mostrar ${selectedSourceIds.length} lista(s)',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _applySourceFilter() {
+    // Atualizar os filtros com as fontes selecionadas
+    if (selectedSourceIds.isEmpty) {
+      // Se nenhuma selecionada, usa todas
+      widget.home.filters.sourceIds = allSources.map((s) => s.id!).toList();
+    } else {
+      widget.home.filters.sourceIds = selectedSourceIds.toList();
+    }
+    
+    // Salvar seleção para persistência
+    SettingsService.saveSelectedSourceIds(selectedSourceIds.toList());
+    
+    _scrollController.jumpTo(0);
+    load(false);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -67,9 +216,24 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> initializeAsync() async {
+    await _loadSources();
+    
+    // Carregar seleção de fontes persistida
+    final savedSourceIds = await SettingsService.getSelectedSourceIds();
+    
     if (widget.home.filters.sourceIds == null) {
-      final sources = await Sql.getEnabledSourcesMinimal();
-      widget.home.filters.sourceIds = sources.map((x) => x.id).toList();
+      if (savedSourceIds.isNotEmpty) {
+        // Usar seleção persistida
+        selectedSourceIds = savedSourceIds.toSet();
+        widget.home.filters.sourceIds = savedSourceIds;
+      } else {
+        // Usar todas as fontes
+        final sources = await Sql.getEnabledSourcesMinimal();
+        widget.home.filters.sourceIds = sources.map((x) => x.id).toList();
+      }
+    } else {
+      // Inicializar selectedSourceIds com base nos filtros existentes
+      selectedSourceIds = widget.home.filters.sourceIds!.toSet();
     }
     if (widget.home.filters.mediaTypes == null) {
       widget.home.filters.mediaTypes =
@@ -360,6 +524,38 @@ class _HomeState extends State<Home> {
                       icon: Icons.video_library,
                       label: 'Séries',
                       mediaType: MediaType.serie,
+                    ),
+                    const SizedBox(width: 16),
+                    // Botão de filtro por listas
+                    ElevatedButton.icon(
+                      onPressed: _showSourceFilter,
+                      icon: Icon(
+                        selectedSourceIds.isEmpty || 
+                        selectedSourceIds.length == allSources.length
+                            ? Icons.list_alt
+                            : Icons.filter_list,
+                        size: 20,
+                      ),
+                      label: Text(
+                        selectedSourceIds.isEmpty || 
+                        selectedSourceIds.length == allSources.length
+                            ? 'Todas'
+                            : '${selectedSourceIds.length}',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedSourceIds.isEmpty || 
+                        selectedSourceIds.length == allSources.length
+                            ? Theme.of(context).colorScheme.surfaceContainerHighest
+                            : Theme.of(context).colorScheme.primary,
+                        foregroundColor: selectedSourceIds.isEmpty || 
+                        selectedSourceIds.length == allSources.length
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ],
                 ),

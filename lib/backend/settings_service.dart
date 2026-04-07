@@ -12,6 +12,7 @@ const showMovies = "showMovies";
 const showSeries = "showSeries";
 const themeMode = "themeMode";
 const lastSeenVersion = "lastSeenVersion";
+const selectedSourceIds = "selectedSourceIds";
 
 class SettingsService {
   static Future<Settings> getSettings() async {
@@ -68,5 +69,18 @@ class SettingsService {
     return (await Sql.getSettings())[lastSeenVersion] != version
         ? version
         : null;
+  }
+
+  static Future<void> saveSelectedSourceIds(List<int> sourceIds) async {
+    HashMap<String, String> map = HashMap();
+    map[selectedSourceIds] = sourceIds.join(',');
+    await Sql.updateSettings(map);
+  }
+
+  static Future<List<int>> getSelectedSourceIds() async {
+    var settingsMap = await Sql.getSettings();
+    var ids = settingsMap[selectedSourceIds];
+    if (ids == null || ids.isEmpty) return [];
+    return ids.split(',').map((e) => int.parse(e)).toList();
   }
 }

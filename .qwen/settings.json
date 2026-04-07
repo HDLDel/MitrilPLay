@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(flutter *)",
+      "Bash(dart *)"
     ]
   },
   "$version": 3
