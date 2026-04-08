@@ -3,7 +3,10 @@
     "allow": [
       "Bash(git *)",
       "Bash(flutter *)",
-      "Bash(dart *)"
+      "Bash(dart *)",
+      "Bash(c:\\users\\hilde\\dev\\flutter\\bin\\flutter *)",
+      "Bash(findstr *)",
+      "Bash(dir *)"
     ]
   },
   "$version": 3

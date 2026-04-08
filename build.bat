@@ -1,55 +1,61 @@
 @echo off
+
 REM ============================================================================
 REM build.bat - Compila o MitrilPlay para Windows
 REM ============================================================================
-REM Script de build para Windows que limpa, obtém dependências e compila o
-REM projeto Flutter. Gera executável em build\windows\x64\runner\Release\.
-REM Requer Flutter SDK no PATH e players (mpv/vlc) na pasta Players.
-REM ============================================================================
 
-REM Build script for ASTRO-TV (Windows)
+echo ==========================================
+echo MitrilPlay Build Script
+echo ==========================================
+echo.
 
 REM Add Flutter to PATH
-set "PATH=%PATH%;C:\Users\hilde\Dev\flutter\bin"
+set PATH=C:\Users\hilde\Dev\flutter\bin;%PATH%
 
-echo ==========================================
-echo ASTRO-TV Build Script
-echo ==========================================
-
-REM Check if Flutter is installed
+REM Verificar Flutter
 where flutter >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Error: Flutter not found in PATH
+    echo ERRO: Flutter nao encontrado
+    pause
+    exit /b 1
+)
+
+echo [1/4] Verificando Flutter...
+call flutter --version
+echo.
+
+echo [2/4] Habilitando Windows...
+call flutter config --enable-windows-desktop
+echo.
+
+echo [3/4] Limpando build anterior...
+call flutter clean
+echo.
+
+echo [4/4] Obtendo dependencias e compilando...
+call flutter pub get
+if %errorlevel% neq 0 (
+    echo.
+    echo ERRO: Falha ao obter dependencias
+    pause
     exit /b 1
 )
 
 echo.
-echo Flutter found
-flutter --version
-
-REM Clean previous build
-echo.
-echo Cleaning previous build...
-call flutter clean
-
-REM Get dependencies
-echo.
-echo Getting dependencies...
-call flutter pub get
-
-REM Build for Windows
-echo.
-echo Building for Windows...
+echo Compilando...
 call flutter build windows --release
+if %errorlevel% neq 0 (
+    echo.
+    echo ERRO: Falha na compilacao!
+    pause
+    exit /b 1
+)
 
 echo.
 echo ==========================================
-echo Build completed!
-echo Output: build\windows\x64\runner\Release\mitril_play.exe
+echo Build concluido com sucesso!
 echo ==========================================
 echo.
-echo Para distribuir:
-echo 1. Copie todo o conteudo de build\windows\x64\runner\Release\
-echo 2. Crie uma pasta Players junto com o executavel
-echo 3. Coloque mpv.exe ou vlc.exe na pasta Players
-echo ==========================================
+echo Executavel: build\windows\x64\runner\Release\mitril_play.exe
+echo.
+pause

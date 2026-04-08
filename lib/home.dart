@@ -74,122 +74,23 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _showSourceFilter() {
-    showModalBottomSheet(
+  Future<void> _showSourceFilter() async {
+    final result = await showModalBottomSheet<Set<int>>(
       context: context,
       isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.6,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Filtrar por Listas',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Opção para selecionar todas
-                  ListTile(
-                    leading: Icon(
-                      selectedSourceIds.isEmpty
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      color: selectedSourceIds.isEmpty
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
-                    title: const Text('Todas as listas'),
-                    trailing: Switch(
-                      value: selectedSourceIds.isEmpty,
-                      onChanged: (_) {
-                        setState(() {
-                          selectedSourceIds.clear();
-                        });
-                        setModalState(() {});
-                      },
-                    ),
-                  ),
-                  const Divider(),
-                  const Text(
-                    'Selecione uma ou mais listas para filtrar:',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  // Lista de fontes com switches
-                  Flexible(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: allSources.length,
-                      itemBuilder: (context, index) {
-                        final source = allSources[index];
-                        final isSelected = selectedSourceIds.isEmpty
-                            ? true
-                            : selectedSourceIds.contains(source.id);
-                        return ListTile(
-                          leading: Icon(
-                            Icons.list_alt,
-                            color: isSelected
-                                ? Theme.of(context).colorScheme.primary
-                                : null,
-                          ),
-                          title: Text(source.name),
-                          subtitle: Text(
-                            getSourceTypeString(source.sourceType),
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          trailing: Switch(
-                            value: isSelected,
-                            onChanged: (value) {
-                              setState(() {
-                                if (value) {
-                                  selectedSourceIds.add(source.id!);
-                                } else {
-                                  selectedSourceIds.remove(source.id);
-                                }
-                              });
-                              setModalState(() {});
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Botão aplicar
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _applySourceFilter();
-                    },
-                    child: Text(
-                      selectedSourceIds.isEmpty
-                          ? 'Mostrar todas as listas'
-                          : 'Mostrar ${selectedSourceIds.length} lista(s)',
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      builder: (context) => SourceFilterSheet(
+        sources: allSources,
+        initialSelectedIds: Set.from(selectedSourceIds),
+      ),
     );
+    
+    if (result != null) {
+      setState(() {
+        selectedSourceIds.clear();
+        selectedSourceIds.addAll(result);
+      });
+      _applySourceFilter();
+    }
   }
 
   void _applySourceFilter() {
@@ -597,5 +498,154 @@ class _HomeState extends State<Home> {
                 child: const Icon(Icons.search),
               ),
             )));
+  }
+}
+
+/// Widget separado para o modal de filtro por fontes
+class SourceFilterSheet extends StatefulWidget {
+  final List<Source> sources;
+  final Set<int> initialSelectedIds;
+
+  const SourceFilterSheet({
+    super.key,
+    required this.sources,
+    required this.initialSelectedIds,
+  });
+
+  @override
+  State<SourceFilterSheet> createState() => _SourceFilterSheetState();
+}
+
+class _SourceFilterSheetState extends State<SourceFilterSheet> {
+  late Map<int, bool> _sourceStates;
+
+  @override
+  void initState() {
+    super.initState();
+    _sourceStates = {};
+    // Inicializar cada fonte com seu estado
+    for (final source in widget.sources) {
+      if (widget.initialSelectedIds.isEmpty) {
+        // Se vazio = todas selecionadas
+        _sourceStates[source.id!] = true;
+      } else {
+        // Usa o estado salvo
+        _sourceStates[source.id!] = widget.initialSelectedIds.contains(source.id);
+      }
+    }
+  }
+
+  void _toggleAll(bool value) {
+    setState(() {
+      for (final key in _sourceStates.keys) {
+        _sourceStates[key] = value;
+      }
+    });
+  }
+
+  void _toggleSource(int sourceId, bool value) {
+    setState(() {
+      _sourceStates[sourceId] = value;
+    });
+  }
+
+  bool get _isAllSelected => _sourceStates.values.every((v) => v);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Filtrar por Listas',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Opção para selecionar todas
+          ListTile(
+            leading: Icon(
+              _isAllSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: _isAllSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
+            title: const Text('Todas as listas'),
+            trailing: Switch(
+              value: _isAllSelected,
+              onChanged: _toggleAll,
+            ),
+          ),
+          const Divider(),
+          const Text(
+            'Desligue as listas que quer ocultar:',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          // Lista de fontes com switches
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.sources.length,
+              itemBuilder: (context, index) {
+                final source = widget.sources[index];
+                final isSelected = _sourceStates[source.id] ?? false;
+                return ListTile(
+                  leading: Icon(
+                    Icons.list_alt,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
+                  ),
+                  title: Text(source.name),
+                  subtitle: Text(
+                    getSourceTypeString(source.sourceType),
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  trailing: Switch(
+                    value: isSelected,
+                    onChanged: (value) => _toggleSource(source.id!, value),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Botão aplicar
+          ElevatedButton(
+            onPressed: () {
+              // Construir Set com apenas os IDs selecionados
+              final selectedIds = <int>{};
+              _sourceStates.forEach((id, isSelected) {
+                if (isSelected) selectedIds.add(id);
+              });
+              
+              // Se todos estão selecionados, retorna vazio (todas)
+              final result = _isAllSelected ? <int>{} : selectedIds;
+              Navigator.pop(context, result);
+            },
+            child: Text(
+              _isAllSelected
+                  ? 'Mostrar todas as listas'
+                  : 'Mostrar ${_sourceStates.values.where((v) => v).length} lista(s)',
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
