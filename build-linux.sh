@@ -17,18 +17,38 @@ echo "MitrilPlay - Compilação para Linux"
 echo "=========================================="
 echo ""
 
+# Impedir execução como root
+if [ "$EUID" -eq 0 ]; then
+    echo "❌ Erro: Não execute este script como root (sudo)!"
+    echo "   O Flutter deve ser executado como usuário normal."
+    echo "   Execute apenas: ./build-linux.sh"
+    echo ""
+    exit 1
+fi
+
 # Verificar se Flutter está instalado
 if ! command -v flutter &> /dev/null; then
     echo "❌ Erro: Flutter não está instalado ou não está no PATH"
     echo ""
     echo "📦 Para instalar, execute:"
-    echo "   sudo ./install-deps-bazzite.sh"
+    echo "   sudo ./install-deps-linux.sh (para instalar as dependências)"
+    echo "   e certifique-se de ter o Flutter instalado no sistema."
     echo ""
     exit 1
 fi
 
 echo "✅ Flutter encontrado:"
 flutter --version
+echo ""
+
+echo "🧹 Restaurando o repositório do Flutter para o estado original..."
+if [ -d "$HOME/flutter" ]; then
+    (cd "$HOME/flutter" && git clean -xfd && git reset --hard HEAD) || echo "⚠️ Aviso: Falha ao limpar o repositório do Flutter."
+fi
+echo ""
+
+echo "🩺 Verificando a saúde do ambiente (flutter doctor)..."
+flutter doctor
 echo ""
 
 # Obter diretório do script

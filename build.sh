@@ -16,6 +16,15 @@ echo "=========================================="
 echo "ASTRO-TV - Script de Compilação"
 echo "=========================================="
 
+# Impedir execução como root
+if [ "$EUID" -eq 0 ]; then
+    echo "❌ Erro: Não execute este script como root (sudo)!"
+    echo "   O Flutter deve ser executado como usuário normal."
+    echo "   Execute apenas: ./build.sh"
+    echo ""
+    exit 1
+fi
+
 # Verificar se Flutter está instalado
 if ! command -v flutter &> /dev/null; then
     echo "❌ Erro: Flutter não está instalado ou não está no PATH"
@@ -23,6 +32,16 @@ if ! command -v flutter &> /dev/null; then
 fi
 
 echo "✅ Flutter encontrado: $(flutter --version --short)"
+echo ""
+
+echo "🧹 Restaurando o repositório do Flutter para o estado original..."
+if [ -d "$HOME/flutter" ]; then
+    (cd "$HOME/flutter" && git clean -xfd && git reset --hard HEAD) || echo "⚠️ Aviso: Falha ao limpar o repositório do Flutter."
+fi
+echo ""
+
+echo "🩺 Verificando a saúde do ambiente (flutter doctor)..."
+flutter doctor
 
 # Limpar build anterior
 echo ""
