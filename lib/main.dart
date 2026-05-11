@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:logging/logging.dart';
 import 'package:mitril_play/backend/settings_service.dart';
 import 'package:mitril_play/backend/sql.dart';
@@ -12,6 +13,7 @@ import 'package:mitril_play/models/filters.dart';
 import 'package:mitril_play/models/home_manager.dart';
 import 'package:mitril_play/models/settings.dart';
 import 'package:mitril_play/setup.dart';
+import 'package:mitril_play/theme.dart';
 
 final _logger = Logger('App');
 
@@ -19,7 +21,8 @@ Future<void> main() async {
   // Run in a custom zone to catch all async errors
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-    
+    MediaKit.ensureInitialized();
+
     // Setup logging
     _setupGlobalLogging();
     _logger.info('App starting...');
@@ -128,49 +131,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Define o tema baseado na configuração
-    ThemeData lightTheme = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-    );
-    
-    ThemeData darkTheme = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-    );
-    
-    // Tema preto (AMOLED)
-    ThemeData blackTheme = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        surface: Colors.black,
-        background: Colors.black,
-        surfaceContainer: Color(0xFF1A1A1A),
-        surfaceContainerHighest: Color(0xFF2A2A2A),
-      ),
-      scaffoldBackgroundColor: Colors.black,
-      cardColor: Colors.black,
-      canvasColor: Colors.black,
-    );
-    
-    ThemeData getTheme() {
-      switch (settings.themeMode) {
-        case AppThemeMode.light:
-          return lightTheme;
-        case AppThemeMode.black:
-          return blackTheme;
-        case AppThemeMode.dark:
-        default:
-          return darkTheme;
-      }
-    }
-    
+    ThemeData currentTheme = getThemeByMode(settings.themeMode);
+    ThemeData darkTheme = createDarkTheme();
+
     return MaterialApp(
         title: 'MitrilPlay',
-        theme: getTheme(),
+        theme: currentTheme,
         darkTheme: darkTheme,
-        themeMode: settings.themeMode == AppThemeMode.light 
-            ? ThemeMode.light 
+        themeMode: settings.themeMode == AppThemeMode.light
+            ? ThemeMode.light
             : ThemeMode.dark,
         debugShowCheckedModeBanner: false,
         home: skipSetup

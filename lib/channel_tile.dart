@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:mitril_play/backend/sql.dart';
 import 'package:mitril_play/models/channel.dart';
@@ -10,6 +9,8 @@ import 'package:mitril_play/backend/xtream.dart';
 import 'package:mitril_play/memory.dart';
 import 'package:mitril_play/models/node.dart';
 import 'package:mitril_play/models/node_type.dart';
+import 'package:mitril_play/internal_player.dart';
+import 'package:mitril_play/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart' as path;
 
@@ -104,8 +105,22 @@ class _ChannelTileState extends State<ChannelTile> {
       }
 
       // Obter headers para o player
-      final headers = await Sql.getChannelHeaders(widget.channel.id!);
+      final channelHeaders = await Sql.getChannelHeaders(widget.channel.id!);
       
+      // Converter para Map<String, String>
+      final headers = <String, String>{};
+      if (channelHeaders != null) {
+        if (channelHeaders.referrer != null && channelHeaders.referrer!.isNotEmpty) {
+          headers['Referer'] = channelHeaders.referrer!;
+        }
+        if (channelHeaders.userAgent != null && channelHeaders.userAgent!.isNotEmpty) {
+          headers['User-Agent'] = channelHeaders.userAgent!;
+        }
+        if (channelHeaders.httpOrigin != null && channelHeaders.httpOrigin!.isNotEmpty) {
+          headers['Origin'] = channelHeaders.httpOrigin!;
+        }
+      }
+
       if (Platform.isWindows) {
         await _openWindowsPlayer(url, headers);
       } else if (Platform.isLinux) {
@@ -118,7 +133,7 @@ class _ChannelTileState extends State<ChannelTile> {
         }
       }
     } catch (e) {
-      debugPrint('Erro ao abrir player externo: $e');
+      debugPrint('Erro ao abrir player: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erro ao reproduzir: ${e.toString()}')),
@@ -127,67 +142,89 @@ class _ChannelTileState extends State<ChannelTile> {
     }
   }
 
-  Future<void> _openWindowsPlayer(String url, dynamic headers) async {
+  Future<void> _openWindowsPlayer(String url, Map<String, String> headers) async {
     // Procurar players na pasta Players (relativa ao executável)
     final executablePath = Platform.resolvedExecutable;
     final executableDir = Directory(executablePath).parent;
     final playersDir = Directory(path.join(executableDir.path, 'Players'));
-    
-    if (!await playersDir.exists()) {
-      throw Exception('Pasta Players não encontrada em: ${playersDir.path}\n\nCrie a pasta Players junto com o executável e coloque mpv.exe ou vlc.exe lá.');
-    }
 
-    // Tentar MPV primeiro
-    final mpvPath = path.join(playersDir.path, 'mpv', 'mpv.exe');
-    final mpvAltPath = path.join(playersDir.path, 'mpv.exe');
-    
-    if (await File(mpvPath).exists()) {
-      debugPrint('Usando MPV: $mpvPath');
-      _playerProcess = await Process.start(
-        mpvPath,
-        [url, '--no-terminal'],
-        runInShell: true,
-      );
-      _monitorPlayer();
-      return;
-    }
-    
-    if (await File(mpvAltPath).exists()) {
-      debugPrint('Usando MPV (alternativo): $mpvAltPath');
-      _playerProcess = await Process.start(
-        mpvAltPath,
-        [url, '--no-terminal'],
-        runInShell: true,
-      );
-      _monitorPlayer();
-      return;
-    }
+    final playersDirExists = await playersDir.exists();
 
-    // Tentar VLC
-    final vlcPath = path.join(playersDir.path, 'vlc', 'vlc.exe');
-    final vlcAltPath = path.join(playersDir.path, 'vlc.exe');
-    final vlcProgramFiles = r'C:\Program Files\VideoLAN\VLC\vlc.exe';
-    final vlcProgramFilesX86 = r'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe';
-    
-    final vlcPaths = [vlcPath, vlcAltPath, vlcProgramFiles, vlcProgramFilesX86];
-    
-    for (final vlcPath in vlcPaths) {
-      if (await File(vlcPath).exists()) {
-        debugPrint('Usando VLC: $vlcPath');
-        _playerProcess = await Process.start(
-          vlcPath,
-          [url],
-          runInShell: true,
-        );
-        _monitorPlayer();
-        return;
+    // Tentar encontrar um player externo
+    String? foundPlayerPath;
+    String? playerName;
+
+    if (playersDirExists) {
+      // Tentar MPV primeiro
+      final mpvPath = path.join(playersDir.path, 'mpv', 'mpv.exe');
+      final mpvAltPath = path.join(playersDir.path, 'mpv.exe');
+
+      if (await File(mpvPath).exists()) {
+        foundPlayerPath = mpvPath;
+        playerName = 'MPV';
+      } else if (await File(mpvAltPath).exists()) {
+        foundPlayerPath = mpvAltPath;
+        playerName = 'MPV (alternativo)';
+      } else {
+        // Tentar VLC
+        final vlcPath = path.join(playersDir.path, 'vlc', 'vlc.exe');
+        final vlcAltPath = path.join(playersDir.path, 'vlc.exe');
+        final vlcProgramFiles = r'C:\Program Files\VideoLAN\VLC\vlc.exe';
+        final vlcProgramFilesX86 = r'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe';
+
+        final vlcPaths = [vlcPath, vlcAltPath, vlcProgramFiles, vlcProgramFilesX86];
+
+        for (final vPath in vlcPaths) {
+          if (await File(vPath).exists()) {
+            foundPlayerPath = vPath;
+            playerName = 'VLC';
+            break;
+          }
+        }
+      }
+    } else {
+      // Verificar VLC instalado no sistema mesmo sem pasta Players
+      final vlcProgramFiles = r'C:\Program Files\VideoLAN\VLC\vlc.exe';
+      final vlcProgramFilesX86 = r'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe';
+      
+      if (await File(vlcProgramFiles).exists()) {
+        foundPlayerPath = vlcProgramFiles;
+        playerName = 'VLC (sistema)';
+      } else if (await File(vlcProgramFilesX86).exists()) {
+        foundPlayerPath = vlcProgramFilesX86;
+        playerName = 'VLC (sistema)';
       }
     }
 
-    throw Exception('Nenhum player encontrado.\n\nColoque na pasta Players:\n- mpv.exe\n  ou\n- vlc.exe');
+    // Se encontrou um player externo, usa-lo
+    if (foundPlayerPath != null) {
+      debugPrint('Usando $playerName: $foundPlayerPath');
+      _playerProcess = await Process.start(
+        foundPlayerPath,
+        playerName == 'MPV' || playerName == 'MPV (alternativo)'
+            ? [url, '--no-terminal']
+            : [url],
+        runInShell: true,
+      );
+      _monitorPlayer();
+      return;
+    }
+
+    // Fallback: usar player interno
+    debugPrint('Nenhum player externo encontrado, usando player interno');
+    if (context.mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => InternalPlayer(
+            url: url,
+            headers: headers,
+          ),
+        ),
+      );
+    }
   }
 
-  Future<void> _openLinuxPlayer(String url, dynamic headers) async {
+  Future<void> _openLinuxPlayer(String url, Map<String, String> headers) async {
     // Procurar players na pasta Players (relativa ao executável)
     final executablePath = Platform.resolvedExecutable;
     final executableDir = Directory(executablePath).parent;
@@ -217,39 +254,49 @@ class _ChannelTileState extends State<ChannelTile> {
     }
 
     // Fallback: procurar AppImage na pasta Players
-    if (!await playersDir.exists()) {
-      throw Exception('Nenhum player encontrado.\n\nInstale mpv ou vlc no sistema:\n  sudo dnf install mpv vlc\n\nOu crie a pasta Players e coloque mpv.AppImage ou vlc.AppImage.');
+    final playersDirExists = await playersDir.exists();
+    if (playersDirExists) {
+      // Tentar MPV AppImage
+      final mpvAppImage = path.join(playersDir.path, 'mpv.AppImage');
+
+      if (await File(mpvAppImage).exists()) {
+        debugPrint('Usando MPV AppImage: $mpvAppImage');
+        _playerProcess = await Process.start(
+          mpvAppImage,
+          [url, '--no-terminal'],
+          runInShell: true,
+        );
+        _monitorPlayer();
+        return;
+      }
+
+      // Tentar VLC AppImage
+      final vlcAppImage = path.join(playersDir.path, 'vlc.AppImage');
+
+      if (await File(vlcAppImage).exists()) {
+        debugPrint('Usando VLC AppImage: $vlcAppImage');
+        _playerProcess = await Process.start(
+          vlcAppImage,
+          [url],
+          runInShell: true,
+        );
+        _monitorPlayer();
+        return;
+      }
     }
 
-    // Tentar MPV AppImage
-    final mpvAppImage = path.join(playersDir.path, 'mpv.AppImage');
-
-    if (await File(mpvAppImage).exists()) {
-      debugPrint('Usando MPV AppImage: $mpvAppImage');
-      _playerProcess = await Process.start(
-        mpvAppImage,
-        [url, '--no-terminal'],
-        runInShell: true,
+    // Fallback: usar player interno
+    debugPrint('Nenhum player externo encontrado, usando player interno');
+    if (context.mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => InternalPlayer(
+            url: url,
+            headers: headers,
+          ),
+        ),
       );
-      _monitorPlayer();
-      return;
     }
-
-    // Tentar VLC AppImage
-    final vlcAppImage = path.join(playersDir.path, 'vlc.AppImage');
-
-    if (await File(vlcAppImage).exists()) {
-      debugPrint('Usando VLC AppImage: $vlcAppImage');
-      _playerProcess = await Process.start(
-        vlcAppImage,
-        [url],
-        runInShell: true,
-      );
-      _monitorPlayer();
-      return;
-    }
-
-    throw Exception('Nenhum player encontrado.\n\nInstale mpv ou vlc no sistema:\n  sudo dnf install mpv vlc\n\nOu crie a pasta Players e coloque mpv.AppImage ou vlc.AppImage.');
   }
 
   Future<bool> _commandExists(String command) async {
@@ -280,21 +327,29 @@ class _ChannelTileState extends State<ChannelTile> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-        elevation: _focusNode.hasFocus ? 8.0 : 4.0,
+    final isFocused = _focusNode.hasFocus;
+
+    return AnimatedScale(
+      scale: isFocused ? 1.02 : 1.0,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      child: Card(
+        elevation: isFocused ? 4.0 : 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: isFocused ? AppColors.focusBorder : AppColors.border,
+            width: isFocused ? 2 : 1,
+          ),
         ),
-        color: widget.channel.favorite
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
-            : Theme.of(context).colorScheme.surfaceContainer,
+        color: AppColors.cardBackground,
         child: InkWell(
           focusNode: _focusNode,
           onLongPress: favorite,
           onTap: () async => await play(),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -304,14 +359,15 @@ class _ChannelTileState extends State<ChannelTile> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
+                        color: AppColors.primaryContainer.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      margin: const EdgeInsets.only(bottom: 6),
+                      margin: const EdgeInsets.only(bottom: 8),
                       child: Text(
                         widget.groupName!,
                         style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
                         ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,
@@ -321,24 +377,35 @@ class _ChannelTileState extends State<ChannelTile> {
                   Expanded(
                     child: Row(
                       children: [
+                        // Container branco arredondado para o logo
                         Expanded(
                             flex: 3,
                             child: Align(
                                 alignment: Alignment.centerLeft,
-                                child: widget.channel.image != null
-                                    ? CachedNetworkImage(
-                                        width: 2000,
-                                        height: 150,
-                                        fit: BoxFit.contain,
-                                        errorWidget: (_, __, ___) =>
-                                            Image.asset("assets/icon.png"),
-                                        imageUrl: widget.channel.image!,
-                                      )
-                                    : Image.asset(
-                                        "assets/icon.png",
-                                        fit: BoxFit.contain,
-                                      ))),
-                        const Expanded(flex: 1, child: SizedBox()),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 120,
+                                    maxHeight: 80,
+                                  ),
+                                  child: widget.channel.image != null
+                                      ? Image.network(
+                                          widget.channel.image!,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) =>
+                                              Image.asset("assets/icon.png", fit: BoxFit.contain),
+                                        )
+                                      : Image.asset(
+                                          "assets/icon.png",
+                                          fit: BoxFit.contain,
+                                        ),
+                                ))),
+                        const Expanded(flex: 1, child: SizedBox(width: 8)),
+                        // Nome do canal
                         Expanded(
                             flex: 8,
                             child: LayoutBuilder(builder: (context, constraints) {
@@ -351,6 +418,12 @@ class _ChannelTileState extends State<ChannelTile> {
                                   (constraints.maxHeight / lineHeight).floor();
                               return Text(
                                 widget.channel.name,
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontFamily: AppTypography.fontFamily,
+                                  fontSize: style.fontSize,
+                                  fontWeight: FontWeight.w500,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: maxLines,
                               );
@@ -360,6 +433,8 @@ class _ChannelTileState extends State<ChannelTile> {
                   ),
                 ],
               )),
-        ));
+        ),
+      ),
+    );
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mitril_play/backend/settings_service.dart';
 import 'package:mitril_play/backend/sql.dart';
 import 'package:mitril_play/backend/utils.dart';
-import 'package:mitril_play/bottom_nav.dart';
+import 'package:mitril_play/side_nav.dart';
 import 'package:mitril_play/channel_tile.dart';
 import 'package:mitril_play/loading.dart';
 import 'package:mitril_play/models/channel.dart';
@@ -19,6 +19,7 @@ import 'package:mitril_play/models/source_type.dart';
 import 'package:mitril_play/models/view_type.dart';
 import 'package:mitril_play/error.dart';
 import 'package:mitril_play/whats_new_modal.dart';
+import 'package:mitril_play/theme.dart';
 
 class Home extends StatefulWidget {
   final HomeManager home;
@@ -205,15 +206,16 @@ class _HomeState extends State<Home> {
       label: Text(label),
       style: ElevatedButton.styleFrom(
         backgroundColor: isSelected
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.surfaceContainerHighest,
+            ? AppColors.primary
+            : AppColors.surfaceContainerHighest,
         foregroundColor: isSelected
-            ? Theme.of(context).colorScheme.onPrimary
-            : Theme.of(context).colorScheme.onSurface,
+            ? AppColors.onPrimary
+            : AppColors.textPrimary,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
+        elevation: 0,
       ),
     );
   }
@@ -343,8 +345,17 @@ class _HomeState extends State<Home> {
                   )
                 : null,
             body: Loading(
-                child: SafeArea(
-                    child: Column(children: [
+              child: Row(
+                children: [
+                  SideNav(
+                    startingView: getStartingView(),
+                    blockSettings: blockSettings,
+                    updateViewMode: updateViewMode,
+                  ),
+                  const VerticalDivider(thickness: 1, width: 1),
+                  Expanded(
+                    child: SafeArea(
+                      child: Column(children: [
               AnimatedSize(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
@@ -352,9 +363,7 @@ class _HomeState extends State<Home> {
                       ? Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 8),
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainer, // Background color
+                          color: AppColors.surfaceContainer,
                           child: Row(
                             children: [
                               Expanded(
@@ -371,7 +380,8 @@ class _HomeState extends State<Home> {
                                 },
                                 decoration: InputDecoration(
                                   hintText: "Search...",
-                                  prefixIcon: const Icon(Icons.search),
+                                  hintStyle: TextStyle(color: AppColors.textSecondary),
+                                  prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide.none,
@@ -384,19 +394,23 @@ class _HomeState extends State<Home> {
                                       },
                                       icon: Icon(widget.home.filters.useKeywords
                                           ? Icons.label
-                                          : Icons.label_outline)),
-                                  filled: true, // Light background for contrast
+                                          : Icons.label_outline,
+                                          color: AppColors.textSecondary)),
+                                  filled: true,
+                                  fillColor: AppColors.surfaceContainerHighest,
                                   contentPadding:
                                       const EdgeInsets.symmetric(vertical: 0),
                                 ),
+                                style: TextStyle(color: AppColors.textPrimary),
                               )),
                               const SizedBox(width: 10),
                               SizedBox(
                                   width: 40,
                                   child: IconButton(
                                       onPressed: toggleSearch,
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.close,
+                                        color: AppColors.textSecondary,
                                       )))
                             ],
                           ),
@@ -405,7 +419,7 @@ class _HomeState extends State<Home> {
               // Filtros de tipo de mídia (TV, Filmes, Séries)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                color: Theme.of(context).colorScheme.surfaceContainer,
+                color: AppColors.surfaceContainer,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -431,31 +445,32 @@ class _HomeState extends State<Home> {
                     ElevatedButton.icon(
                       onPressed: _showSourceFilter,
                       icon: Icon(
-                        selectedSourceIds.isEmpty || 
+                        selectedSourceIds.isEmpty ||
                         selectedSourceIds.length == allSources.length
                             ? Icons.list_alt
                             : Icons.filter_list,
                         size: 20,
                       ),
                       label: Text(
-                        selectedSourceIds.isEmpty || 
+                        selectedSourceIds.isEmpty ||
                         selectedSourceIds.length == allSources.length
                             ? 'Todas'
                             : '${selectedSourceIds.length}',
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedSourceIds.isEmpty || 
+                        backgroundColor: selectedSourceIds.isEmpty ||
                         selectedSourceIds.length == allSources.length
-                            ? Theme.of(context).colorScheme.surfaceContainerHighest
-                            : Theme.of(context).colorScheme.primary,
-                        foregroundColor: selectedSourceIds.isEmpty || 
+                            ? AppColors.surfaceContainerHighest
+                            : AppColors.primary,
+                        foregroundColor: selectedSourceIds.isEmpty ||
                         selectedSourceIds.length == allSources.length
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Theme.of(context).colorScheme.onPrimary,
+                            ? AppColors.textPrimary
+                            : AppColors.onPrimary,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        elevation: 0,
                       ),
                     ),
                   ],
@@ -484,11 +499,11 @@ class _HomeState extends State<Home> {
                   );
                 },
               )),
-            ]))),
-            bottomNavigationBar: BottomNav(
-              startingView: getStartingView(),
-              blockSettings: blockSettings,
-              updateViewMode: updateViewMode,
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
             ),
             floatingActionButton: Visibility(
               visible: !searchMode,
@@ -558,6 +573,10 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.6,
       ),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -567,10 +586,12 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
             children: [
               Text(
                 'Filtrar por Listas',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                ),
               ),
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: Icon(Icons.close, color: AppColors.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -581,19 +602,22 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
             leading: Icon(
               _isAllSelected ? Icons.check_circle : Icons.radio_button_unchecked,
               color: _isAllSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : null,
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
             ),
-            title: const Text('Todas as listas'),
+            title: Text(
+              'Todas as listas',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
             trailing: Switch(
               value: _isAllSelected,
               onChanged: _toggleAll,
             ),
           ),
           const Divider(),
-          const Text(
+          Text(
             'Desligue as listas que quer ocultar:',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           // Lista de fontes com switches
@@ -608,13 +632,16 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
                   leading: Icon(
                     Icons.list_alt,
                     color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                   ),
-                  title: Text(source.name),
+                  title: Text(
+                    source.name,
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
                   subtitle: Text(
                     getSourceTypeString(source.sourceType),
-                    style: const TextStyle(fontSize: 11),
+                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
                   trailing: Switch(
                     value: isSelected,
@@ -633,7 +660,7 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
               _sourceStates.forEach((id, isSelected) {
                 if (isSelected) selectedIds.add(id);
               });
-              
+
               // Se todos estão selecionados, retorna vazio (todas)
               final result = _isAllSelected ? <int>{} : selectedIds;
               Navigator.pop(context, result);

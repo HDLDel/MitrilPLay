@@ -1,7 +1,7 @@
 import 'package:mitril_play/models/media_type.dart';
 import 'package:mitril_play/models/view_type.dart';
 
-enum AppThemeMode { light, dark, black }
+enum AppThemeMode { light, dark, black, aurora, cosmic, ocean }
 
 class Settings {
   ViewType defaultView;
