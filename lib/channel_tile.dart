@@ -272,11 +272,21 @@ class _ChannelTileState extends State<ChannelTile> {
 
       // Tentar VLC AppImage
       final vlcAppImage = path.join(playersDir.path, 'vlc.AppImage');
+      final vlcAppImageUpper = path.join(playersDir.path, 'VLC.AppImage');
 
       if (await File(vlcAppImage).exists()) {
         debugPrint('Usando VLC AppImage: $vlcAppImage');
         _playerProcess = await Process.start(
           vlcAppImage,
+          [url],
+          runInShell: true,
+        );
+        _monitorPlayer();
+        return;
+      } else if (await File(vlcAppImageUpper).exists()) {
+        debugPrint('Usando VLC AppImage: $vlcAppImageUpper');
+        _playerProcess = await Process.start(
+          vlcAppImageUpper,
           [url],
           runInShell: true,
         );

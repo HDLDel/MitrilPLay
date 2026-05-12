@@ -21,7 +21,14 @@ Future<void> main() async {
   // Run in a custom zone to catch all async errors
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-    MediaKit.ensureInitialized();
+    
+    try {
+      MediaKit.ensureInitialized();
+    } catch (e) {
+      // Ignora erro se o libmpv não estiver presente no sistema.
+      // O app continuará e usará os players externos de fallback.
+      debugPrint('Aviso: Falha ao inicializar o MediaKit (provavelmente libmpv não instalado): $e');
+    }
 
     // Setup logging
     _setupGlobalLogging();
