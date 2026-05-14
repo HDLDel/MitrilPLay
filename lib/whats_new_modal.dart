@@ -33,7 +33,7 @@ class WhatsNewModal extends StatelessWidget {
           child: SingleChildScrollView(
               child: const Padding(
                   padding: EdgeInsets.only(right: 8.0),
-                  child: const Text(
+                  child: Text(
                     '''
 Hi! Thanks for supporting MitrilPlay. Here's everything new:
 

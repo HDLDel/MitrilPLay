@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,24 +20,25 @@ Future<void> main() async {
   // Run in a custom zone to catch all async errors
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-    
+
     try {
       MediaKit.ensureInitialized();
     } catch (e) {
       // Ignora erro se o libmpv não estiver presente no sistema.
       // O app continuará e usará os players externos de fallback.
-      debugPrint('Aviso: Falha ao inicializar o MediaKit (provavelmente libmpv não instalado): $e');
+      debugPrint(
+          'Aviso: Falha ao inicializar o MediaKit (provavelmente libmpv não instalado): $e');
     }
 
     // Setup logging
     _setupGlobalLogging();
     _logger.info('App starting...');
-    
+
     try {
       _logger.info('Checking for sources...');
       final hasSources = await Sql.hasSources();
       _logger.info('Has sources: $hasSources');
-      
+
       _logger.info('Loading settings...');
       final settings = await SettingsService.getSettings();
       _logger.info('Settings loaded: defaultView=${settings.defaultView}');
@@ -63,7 +63,8 @@ void _setupGlobalLogging() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     // Log para console
-    debugPrint('${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
+    debugPrint(
+        '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
     if (record.error != null) {
       debugPrint('Error: ${record.error}');
       debugPrint('StackTrace: ${record.stackTrace}');
@@ -77,7 +78,8 @@ void _setupGlobalLogging() {
 
   // Capturar erros globais do Flutter - NÃO fechar o app
   FlutterError.onError = (details) {
-    _logger.severe('Flutter error: ${details.summary}', details.exception, details.stack);
+    _logger.severe(
+        'Flutter error: ${details.summary}', details.exception, details.stack);
     // Mostrar error widget customizado em vez de crashar
   };
 
@@ -86,10 +88,11 @@ void _setupGlobalLogging() {
     // Retornar true para NÃO fechar o app
     return true;
   };
-  
+
   // Error widget builder customizado
   ErrorWidget.builder = (FlutterErrorDetails details) {
-    _logger.severe('UI Error: ${details.exception}', details.exception, details.stack);
+    _logger.severe(
+        'UI Error: ${details.exception}', details.exception, details.stack);
     return Material(
       child: Center(
         child: Column(
@@ -116,17 +119,21 @@ void _setupGlobalLogging() {
 
 void _logToFile(LogRecord record) {
   // Implementação simples de log para arquivo
-  final logPath = '${Platform.environment['APPDATA'] ?? '.'}\\MitrilPlay\\logs\\app.log';
+  final logPath =
+      '${Platform.environment['APPDATA'] ?? '.'}\\MitrilPlay\\logs\\app.log';
   final dir = File(logPath).parent;
   if (!dir.existsSync()) {
     dir.createSync(recursive: true);
   }
-  
-  final logLine = '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}\n';
+
+  final logLine =
+      '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}\n';
   File(logPath).writeAsStringSync(logLine, mode: FileMode.append);
-  
+
   if (record.error != null || record.stackTrace != null) {
-    File(logPath).writeAsStringSync('Error: ${record.error}\nStack: ${record.stackTrace}\n\n', mode: FileMode.append);
+    File(logPath).writeAsStringSync(
+        'Error: ${record.error}\nStack: ${record.stackTrace}\n\n',
+        mode: FileMode.append);
   }
 }
 
