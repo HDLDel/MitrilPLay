@@ -69,12 +69,11 @@ class Sql {
       SELECT group_name, image, ?, media_type
       FROM channels
       WHERE source_id = ?
-      GROUP BY group_name;
-      ON CONFLICT(name, source_id)  
+      GROUP BY group_name
+      ON CONFLICT(name, source_id)
       DO UPDATE SET
           media_type = excluded.media_type;
-    ''', [sourceId, sourceId]);
-      await tx.execute('''
+      ''', [sourceId, sourceId]);      await tx.execute('''
       UPDATE channels
       SET group_id = (SELECT id FROM groups WHERE groups.name = channels.group_name LIMIT 1);
       WHERE source_id = ?;

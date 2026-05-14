@@ -124,6 +124,11 @@ class DbFactory {
         await tx.execute('''
           DROP INDEX IF EXISTS channels_unique;
         ''');
+      }))
+      ..add(SqliteMigration(5, (tx) async {
+        await tx.execute('''
+          CREATE UNIQUE INDEX IF NOT EXISTS index_channels_unique ON channels(name, source_id);
+        ''');
       }));
     await migrations.migrate(db);
     return db;
