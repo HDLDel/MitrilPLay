@@ -73,8 +73,6 @@ class DbFactory {
         await tx
             .execute('''CREATE INDEX index_channel_name ON channels(name);''');
         await tx.execute(
-            '''CREATE UNIQUE INDEX channels_unique ON channels(name, source_id);''');
-        await tx.execute(
             '''CREATE UNIQUE INDEX index_source_name ON sources(name);''');
         await tx.execute(
             '''CREATE INDEX index_source_enabled ON sources(enabled);''');
@@ -120,6 +118,11 @@ class DbFactory {
         ''');
         await tx.execute('''
           CREATE INDEX index_groups_media_type ON groups(media_type);
+        ''');
+      }))
+      ..add(SqliteMigration(4, (tx) async {
+        await tx.execute('''
+          DROP INDEX IF EXISTS channels_unique;
         ''');
       }));
     await migrations.migrate(db);
