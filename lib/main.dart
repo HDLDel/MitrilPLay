@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:logging/logging.dart';
 import 'package:mitril_play/backend/settings_service.dart';
 import 'package:mitril_play/backend/sql.dart';
@@ -21,14 +20,7 @@ Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    try {
-      MediaKit.ensureInitialized();
-    } catch (e) {
-      // Ignora erro se o libmpv não estiver presente no sistema.
-      // O app continuará e usará os players externos de fallback.
-      debugPrint(
-          'Aviso: Falha ao inicializar o MediaKit (provavelmente libmpv não instalado): $e');
-    }
+    
 
     // Setup logging
     _setupGlobalLogging();
