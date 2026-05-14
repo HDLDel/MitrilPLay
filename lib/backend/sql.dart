@@ -176,9 +176,12 @@ class Sql {
         ? filters.mediaTypes!.map((x) => x.index)
         : [1];
     var query = filters.query ?? "";
+    var searchStr = query.replaceAll(
+        RegExp(r'[aAáÁàÀâÂãÃäÄeEéÉèÈêÊëËiIíÍìÌîÎïÏoOóÓòÒôÔõÕöÖuUúÚùÙûÛüÜcCçÇ]'),
+        '_');
     var keywords = filters.useKeywords
-        ? query.split(" ").map((f) => "%$f%").toList()
-        : ["%$query%"];
+        ? searchStr.split(" ").map((f) => "%$f%").toList()
+        : ["%$searchStr%"];
     var sqlQuery = '''
         SELECT * FROM channels 
         WHERE (${getKeywordsSql(keywords.length)})
@@ -241,9 +244,12 @@ class Sql {
     var db = await DbFactory.db;
     var offset = filters.page * pageSize - pageSize;
     var query = filters.query ?? "";
+    var searchStr = query.replaceAll(
+        RegExp(r'[aAáÁàÀâÂãÃäÄeEéÉèÈêÊëËiIíÍìÌîÎïÏoOóÓòÒôÔõÕöÖuUúÚùÙûÛüÜcCçÇ]'),
+        '_');
     var keywords = filters.useKeywords
-        ? query.split(" ").map((f) => "%$f%").toList()
-        : ["%$query%"];
+        ? searchStr.split(" ").map((f) => "%$f%").toList()
+        : ["%$searchStr%"];
     var mediaTypes = filters.mediaTypes!.map((x) => x.index);
     var sqlQuery = '''
         SELECT * FROM groups 
