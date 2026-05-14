@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
-class InternalPlayer extends StatelessWidget {
+class InternalPlayer extends StatefulWidget {
   final String url;
   final Map<String, String>? headers;
 
@@ -11,34 +13,84 @@ class InternalPlayer extends StatelessWidget {
   });
 
   @override
+  State<InternalPlayer> createState() => _InternalPlayerState();
+}
+
+class _InternalPlayerState extends State<InternalPlayer> {
+  late final Player player;
+  late final VideoController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    player = Player();
+    controller = VideoController(player);
+
+    // Configurar headers se fornecidos
+    final httpHeaders = widget.headers != null
+        ? {
+            for (final entry in widget.headers!.entries)
+              entry.key: entry.value,
+          }
+        : <String, String>{};
+
+    // Abrir o stream com headers
+    player.open(
+      Media(
+        widget.url,
+        httpHeaders: httpHeaders,
+      ),
+    );
+
+    // Entrar em tela cheia automaticamente
+    player.setPlaylistMode(PlaylistMode.none);
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Aviso de Compatibilidade'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.videocam_off, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                'Player Interno Desativado',
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Botão voltar
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Voltar',
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Reproduzindo',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 16),
-              Text(
-                'Esta versão foi compilada especificamente para distribuições imutáveis e não possui o player interno.\n\nPor favor, utilize os players externos (VLC ou MPV) configurando-os na aba de Ajustes.',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-                textAlign: TextAlign.center,
+            ),
+            // Player de vídeo
+            Expanded(
+              child: Center(
+                child: Video(
+                  controller: controller,
+                  controls: MaterialVideoControls,
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
