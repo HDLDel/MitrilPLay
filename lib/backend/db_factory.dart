@@ -134,6 +134,9 @@ class DbFactory {
         await tx.execute('''
           DROP INDEX IF EXISTS index_channels_unique;
         ''');
+        await tx.execute('''
+          CREATE UNIQUE INDEX IF NOT EXISTS index_channels_unique ON channels(url, source_id);
+        ''');
       }));
     await migrations.migrate(db);
     return db;

@@ -34,6 +34,14 @@ class Sql {
       await tx.execute('''
         INSERT INTO channels (name, image, url, source_id, media_type, series_id, favorite, stream_id, group_name)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (url, source_id)
+        DO UPDATE SET
+          name = excluded.name,
+          group_name = excluded.group_name,
+          media_type = excluded.media_type,
+          stream_id = excluded.stream_id,
+          image = excluded.image,
+          series_id = excluded.series_id;
       ''', [
         channel.name,
         channel.image,
@@ -65,11 +73,12 @@ class Sql {
       ON CONFLICT(name, source_id)
       DO UPDATE SET
           media_type = excluded.media_type;
-      ''', [sourceId, sourceId]);      await tx.execute('''
+      ''', [sourceId, sourceId]);
+      await tx.execute('''
       UPDATE channels
-      SET group_id = (SELECT id FROM groups WHERE groups.name = channels.group_name LIMIT 1);
+      SET group_id = (SELECT id FROM groups WHERE groups.name = channels.group_name LIMIT 1)
       WHERE source_id = ?;
-    ''');
+    ''', [sourceId]);
     };
   }
 
@@ -107,7 +116,7 @@ class Sql {
         LIMIT 1
     ''', [channelId]);
     if (result == null) return null;
-    
+
     return Channel(
       id: result.columnAt(0),
       name: result.columnAt(1),
