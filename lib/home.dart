@@ -84,7 +84,7 @@ class _HomeState extends State<Home> {
         initialSelectedIds: Set.from(selectedSourceIds),
       ),
     );
-    
+
     if (result != null) {
       setState(() {
         selectedSourceIds.clear();
@@ -102,10 +102,10 @@ class _HomeState extends State<Home> {
     } else {
       widget.home.filters.sourceIds = selectedSourceIds.toList();
     }
-    
+
     // Salvar seleção para persistência
     SettingsService.saveSelectedSourceIds(selectedSourceIds.toList());
-    
+
     _scrollController.jumpTo(0);
     load(false);
   }
@@ -119,10 +119,10 @@ class _HomeState extends State<Home> {
 
   Future<void> initializeAsync() async {
     await _loadSources();
-    
+
     // Carregar seleção de fontes persistida
     final savedSourceIds = await SettingsService.getSelectedSourceIds();
-    
+
     if (widget.home.filters.sourceIds == null) {
       if (savedSourceIds.isNotEmpty) {
         // Usar seleção persistida
@@ -187,7 +187,7 @@ class _HomeState extends State<Home> {
     setState(() {
       _selectedMediaType = _selectedMediaType == type ? null : type;
       widget.home.filters.mediaTypes = _selectedMediaType != null
-          ? [ _selectedMediaType! ]
+          ? [_selectedMediaType!]
           : (MediaType.values.toList()..remove(MediaType.group));
     });
     _scrollController.jumpTo(0);
@@ -205,12 +205,10 @@ class _HomeState extends State<Home> {
       icon: Icon(icon, size: 20),
       label: Text(label),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected
-            ? AppColors.primary
-            : AppColors.surfaceContainerHighest,
-        foregroundColor: isSelected
-            ? AppColors.onPrimary
-            : AppColors.textPrimary,
+        backgroundColor:
+            isSelected ? AppColors.primary : AppColors.surfaceContainerHighest,
+        foregroundColor:
+            isSelected ? AppColors.onPrimary : AppColors.textPrimary,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -351,166 +349,181 @@ class _HomeState extends State<Home> {
                     startingView: getStartingView(),
                     blockSettings: blockSettings,
                     updateViewMode: updateViewMode,
+                    onSearchTapped: toggleSearch,
+                    searchMode: searchMode,
                   ),
                   const VerticalDivider(thickness: 1, width: 1),
                   Expanded(
                     child: SafeArea(
                       child: Column(children: [
-              AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  child: searchMode
-                      ? Container(
+                        AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: searchMode
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 8),
+                                    color: AppColors.surfaceContainer,
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                            child: TextField(
+                                          controller: searchController,
+                                          focusNode: _focusNode,
+                                          onChanged: (query) {
+                                            _debounce?.cancel();
+                                            _debounce = Timer(
+                                                const Duration(
+                                                    milliseconds: 500), () {
+                                              widget.home.filters.query = query;
+                                              load(false);
+                                            });
+                                          },
+                                          decoration: InputDecoration(
+                                            hintText: "Search...",
+                                            hintStyle: TextStyle(
+                                                color: AppColors.textSecondary),
+                                            prefixIcon: Icon(Icons.search,
+                                                color: AppColors.textSecondary),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            suffixIcon: IconButton(
+                                                onPressed: () {
+                                                  widget.home.filters
+                                                          .useKeywords =
+                                                      !widget.home.filters
+                                                          .useKeywords;
+                                                  load(false);
+                                                },
+                                                icon: Icon(
+                                                    widget.home.filters
+                                                            .useKeywords
+                                                        ? Icons.label
+                                                        : Icons.label_outline,
+                                                    color: AppColors
+                                                        .textSecondary)),
+                                            filled: true,
+                                            fillColor: AppColors
+                                                .surfaceContainerHighest,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    vertical: 0),
+                                          ),
+                                          style: TextStyle(
+                                              color: AppColors.textPrimary),
+                                        )),
+                                        const SizedBox(width: 10),
+                                        SizedBox(
+                                            width: 40,
+                                            child: IconButton(
+                                                onPressed: toggleSearch,
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                )))
+                                      ],
+                                    ),
+                                  )
+                                : const SizedBox.shrink()),
+                        // Filtros de tipo de mídia (TV, Filmes, Séries)
+                        Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 8),
+                              horizontal: 16, vertical: 10),
                           color: AppColors.surfaceContainer,
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Expanded(
-                                  child: TextField(
-                                controller: searchController,
-                                focusNode: _focusNode,
-                                onChanged: (query) {
-                                  _debounce?.cancel();
-                                  _debounce = Timer(
-                                      const Duration(milliseconds: 500), () {
-                                    widget.home.filters.query = query;
-                                    load(false);
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: "Search...",
-                                  hintStyle: TextStyle(color: AppColors.textSecondary),
-                                  prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  suffixIcon: IconButton(
-                                      onPressed: () {
-                                        widget.home.filters.useKeywords =
-                                            !widget.home.filters.useKeywords;
-                                        load(false);
-                                      },
-                                      icon: Icon(widget.home.filters.useKeywords
-                                          ? Icons.label
-                                          : Icons.label_outline,
-                                          color: AppColors.textSecondary)),
-                                  filled: true,
-                                  fillColor: AppColors.surfaceContainerHighest,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(vertical: 0),
+                              _buildMediaTypeButton(
+                                icon: Icons.live_tv,
+                                label: 'TV',
+                                mediaType: MediaType.livestream,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildMediaTypeButton(
+                                icon: Icons.movie,
+                                label: 'Filmes',
+                                mediaType: MediaType.movie,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildMediaTypeButton(
+                                icon: Icons.video_library,
+                                label: 'Séries',
+                                mediaType: MediaType.serie,
+                              ),
+                              const SizedBox(width: 16),
+                              // Botão de filtro por listas
+                              ElevatedButton.icon(
+                                onPressed: _showSourceFilter,
+                                icon: Icon(
+                                  selectedSourceIds.isEmpty ||
+                                          selectedSourceIds.length ==
+                                              allSources.length
+                                      ? Icons.list_alt
+                                      : Icons.filter_list,
+                                  size: 20,
                                 ),
-                                style: TextStyle(color: AppColors.textPrimary),
-                              )),
-                              const SizedBox(width: 10),
-                              SizedBox(
-                                  width: 40,
-                                  child: IconButton(
-                                      onPressed: toggleSearch,
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: AppColors.textSecondary,
-                                      )))
+                                label: Text(
+                                  selectedSourceIds.isEmpty ||
+                                          selectedSourceIds.length ==
+                                              allSources.length
+                                      ? 'Todas'
+                                      : '${selectedSourceIds.length}',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: selectedSourceIds.isEmpty ||
+                                          selectedSourceIds.length ==
+                                              allSources.length
+                                      ? AppColors.surfaceContainerHighest
+                                      : AppColors.primary,
+                                  foregroundColor: selectedSourceIds.isEmpty ||
+                                          selectedSourceIds.length ==
+                                              allSources.length
+                                      ? AppColors.textPrimary
+                                      : AppColors.onPrimary,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  elevation: 0,
+                                ),
+                              ),
                             ],
                           ),
-                        )
-                      : const SizedBox.shrink()),
-              // Filtros de tipo de mídia (TV, Filmes, Séries)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                color: AppColors.surfaceContainer,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildMediaTypeButton(
-                      icon: Icons.live_tv,
-                      label: 'TV',
-                      mediaType: MediaType.livestream,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildMediaTypeButton(
-                      icon: Icons.movie,
-                      label: 'Filmes',
-                      mediaType: MediaType.movie,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildMediaTypeButton(
-                      icon: Icons.video_library,
-                      label: 'Séries',
-                      mediaType: MediaType.serie,
-                    ),
-                    const SizedBox(width: 16),
-                    // Botão de filtro por listas
-                    ElevatedButton.icon(
-                      onPressed: _showSourceFilter,
-                      icon: Icon(
-                        selectedSourceIds.isEmpty ||
-                        selectedSourceIds.length == allSources.length
-                            ? Icons.list_alt
-                            : Icons.filter_list,
-                        size: 20,
-                      ),
-                      label: Text(
-                        selectedSourceIds.isEmpty ||
-                        selectedSourceIds.length == allSources.length
-                            ? 'Todas'
-                            : '${selectedSourceIds.length}',
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedSourceIds.isEmpty ||
-                        selectedSourceIds.length == allSources.length
-                            ? AppColors.surfaceContainerHighest
-                            : AppColors.primary,
-                        foregroundColor: selectedSourceIds.isEmpty ||
-                        selectedSourceIds.length == allSources.length
-                            ? AppColors.textPrimary
-                            : AppColors.onPrimary,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                  child: GridView.builder(
-                shrinkWrap: true,
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 15, 16, 5),
-                itemCount: channels.length,
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 400,
-                  mainAxisExtent: 220,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                ),
-                itemBuilder: (context, index) {
-                  final channel = channels[index];
-                  final sourceName = sourceNames[channel.sourceId] ?? 'Lista';
-                  return ChannelTile(
-                    channel: channel,
-                    parentContext: context,
-                    setNode: setNode,
-                    groupName: sourceName,
-                  );
-                },
-              )),
+                        Expanded(
+                            child: GridView.builder(
+                          shrinkWrap: true,
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 15, 16, 5),
+                          itemCount: channels.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 400,
+                            mainAxisExtent: 220,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                          ),
+                          itemBuilder: (context, index) {
+                            final channel = channels[index];
+                            final sourceName =
+                                sourceNames[channel.sourceId] ?? 'Lista';
+                            return ChannelTile(
+                              channel: channel,
+                              parentContext: context,
+                              setNode: setNode,
+                              groupName: sourceName,
+                            );
+                          },
+                        )),
                       ]),
                     ),
                   ),
                 ],
-              ),
-            ),
-            floatingActionButton: Visibility(
-              visible: !searchMode,
-              child: FloatingActionButton(
-                onPressed: toggleSearch,
-                tooltip: 'Search',
-                child: const Icon(Icons.search),
               ),
             )));
   }
@@ -545,7 +558,8 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
         _sourceStates[source.id!] = true;
       } else {
         // Usa o estado salvo
-        _sourceStates[source.id!] = widget.initialSelectedIds.contains(source.id);
+        _sourceStates[source.id!] =
+            widget.initialSelectedIds.contains(source.id);
       }
     }
   }
@@ -587,8 +601,8 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
               Text(
                 'Filtrar por Listas',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+                      color: AppColors.textPrimary,
+                    ),
               ),
               IconButton(
                 icon: Icon(Icons.close, color: AppColors.textSecondary),
@@ -600,10 +614,11 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
           // Opção para selecionar todas
           ListTile(
             leading: Icon(
-              _isAllSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: _isAllSelected
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
+              _isAllSelected
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked,
+              color:
+                  _isAllSelected ? AppColors.primary : AppColors.textSecondary,
             ),
             title: Text(
               'Todas as listas',
@@ -641,7 +656,8 @@ class _SourceFilterSheetState extends State<SourceFilterSheet> {
                   ),
                   subtitle: Text(
                     getSourceTypeString(source.sourceType),
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style:
+                        TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
                   trailing: Switch(
                     value: isSelected,

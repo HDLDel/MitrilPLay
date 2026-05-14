@@ -7,11 +7,15 @@ class SideNav extends StatefulWidget {
   final Function(ViewType) updateViewMode;
   final ViewType startingView;
   final bool blockSettings;
+  final VoidCallback? onSearchTapped;
+  final bool searchMode;
   const SideNav({
     super.key,
     required this.updateViewMode,
     this.startingView = ViewType.all,
     this.blockSettings = false,
+    this.onSearchTapped,
+    this.searchMode = false,
   });
 
   @override
@@ -65,6 +69,23 @@ class _SideNavState extends State<SideNav> {
         ),
       ),
       child: NavigationRail(
+        leading: widget.onSearchTapped != null
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: FloatingActionButton(
+                  elevation: 0,
+                  onPressed: widget.onSearchTapped,
+                  tooltip: 'Search',
+                  backgroundColor: widget.searchMode
+                      ? AppColors.primary
+                      : AppColors.surfaceContainerHighest,
+                  foregroundColor: widget.searchMode
+                      ? AppColors.onPrimary
+                      : AppColors.textPrimary,
+                  child: const Icon(Icons.search),
+                ),
+              )
+            : null,
         backgroundColor: AppColors.cardBackground,
         selectedIndex: _selectedIndex,
         onDestinationSelected: onRailTapped,
