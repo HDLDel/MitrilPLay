@@ -34,14 +34,6 @@ class Sql {
       await tx.execute('''
         INSERT INTO channels (name, image, url, source_id, media_type, series_id, favorite, stream_id, group_name)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT (name, source_id)
-        DO UPDATE SET
-          url = excluded.url,
-          group_name = excluded.group_name,
-          media_type = excluded.media_type,
-          stream_id = excluded.stream_id,
-          image = excluded.image,
-          series_id = excluded.series_id;
       ''', [
         channel.name,
         channel.image,
