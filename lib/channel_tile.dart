@@ -76,7 +76,8 @@ class _ChannelTileState extends State<ChannelTile> {
 
   Future<void> play() async {
     if (widget.channel.mediaType == MediaType.group ||
-        widget.channel.mediaType == MediaType.serie) {
+        widget.channel.mediaType == MediaType.serie ||
+        widget.channel.mediaType == MediaType.season) {
       if (widget.channel.mediaType == MediaType.serie &&
           !refreshedSeries.contains(widget.channel.id)) {
         await Error.tryAsync(() async {
@@ -85,9 +86,9 @@ class _ChannelTileState extends State<ChannelTile> {
         }, widget.parentContext, null, true, false);
       }
       widget.setNode(Node(
-          id: widget.channel.mediaType == MediaType.group
-              ? widget.channel.id!
-              : int.parse(widget.channel.url!),
+          id: widget.channel.mediaType == MediaType.serie
+              ? int.parse(widget.channel.url!)
+              : widget.channel.id!,
           name: widget.channel.name,
           type: fromMediaType(widget.channel.mediaType)));
     } else {

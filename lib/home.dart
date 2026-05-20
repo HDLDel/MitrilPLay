@@ -320,7 +320,12 @@ class _HomeState extends State<Home> {
     } else if (node.type == NodeType.category) {
       home.filters.groupId = node.id;
     }
-    if (node.type == NodeType.series) home.filters.seriesId = node.id;
+    if (widget.home.filters.seriesId != null) {
+      home.filters.seriesId = widget.home.filters.seriesId;
+    } else if (node.type == NodeType.series) {
+      home.filters.seriesId = node.id;
+    }
+    if (node.type == NodeType.season) home.filters.season = node.id;
     Navigator.of(context).push(NoPushAnimationMaterialPageRoute(
         builder: (context) => Home(home: home)));
   }

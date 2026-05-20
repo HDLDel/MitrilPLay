@@ -203,5 +203,7 @@ Channel episodeToChannel(XtreamEpisode episode, Source source, int seriesId) {
       favorite: false,
       url: getUrl(
           episode.id, source, MediaType.serie, episode.containerExtension),
-      seriesId: seriesId);
+      seriesId: seriesId,
+      season: int.tryParse(episode.season) ?? 0,
+      episodeNum: int.tryParse(episode.episodeNum) ?? 0);
 }

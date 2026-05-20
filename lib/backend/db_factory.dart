@@ -137,6 +137,14 @@ class DbFactory {
         await tx.execute('''
           CREATE UNIQUE INDEX IF NOT EXISTS index_channels_unique ON channels(url, source_id);
         ''');
+      }))
+      ..add(SqliteMigration(7, (tx) async {
+        await tx.execute('''
+          ALTER TABLE channels ADD COLUMN season integer;
+        ''');
+        await tx.execute('''
+          ALTER TABLE channels ADD COLUMN episode_num integer;
+        ''');
       }));
     await migrations.migrate(db);
     return db;

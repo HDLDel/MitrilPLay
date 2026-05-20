@@ -10,6 +10,7 @@ class Filters {
   int? seriesId;
   int? groupId;
   bool useKeywords;
+  int? season;
 
   Filters({
     this.query,
@@ -20,5 +21,6 @@ class Filters {
     this.seriesId,
     this.groupId,
     this.useKeywords = false,
+    this.season,
   });
 }

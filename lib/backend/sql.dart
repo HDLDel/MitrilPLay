@@ -32,8 +32,8 @@ class Sql {
       insertChannel(Channel channel) {
     return (SqliteWriteContext tx, Map<String, String> memory) async {
       await tx.execute('''
-        INSERT INTO channels (name, image, url, source_id, media_type, series_id, favorite, stream_id, group_name)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO channels (name, image, url, source_id, media_type, series_id, favorite, stream_id, group_name, season, episode_num)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (url, source_id)
         DO UPDATE SET
           name = excluded.name,
@@ -41,7 +41,9 @@ class Sql {
           media_type = excluded.media_type,
           stream_id = excluded.stream_id,
           image = excluded.image,
-          series_id = excluded.series_id;
+          series_id = excluded.series_id,
+          season = excluded.season,
+          episode_num = excluded.episode_num;
       ''', [
         channel.name,
         channel.image,
@@ -53,7 +55,9 @@ class Sql {
         channel.seriesId,
         channel.favorite,
         channel.streamId,
-        channel.group
+        channel.group,
+        channel.season,
+        channel.episodeNum
       ]);
       memory['lastChannelId'] =
           (await tx.get("SELECT last_insert_rowid()")).columnAt(0).toString();
@@ -170,6 +174,9 @@ class Sql {
         filters.seriesId == null) {
       return searchGroup(filters);
     }
+    if (filters.seriesId != null && filters.season == null) {
+      return searchSeason(filters);
+    }
     var db = await DbFactory.db;
     var offset = filters.page * pageSize - pageSize;
     var mediaTypes = filters.seriesId == null
@@ -182,14 +189,23 @@ class Sql {
     var keywords = filters.useKeywords
         ? searchStr.split(" ").map((f) => "%$f%").toList()
         : ["%$searchStr%"];
+    var relevanceParams = [searchStr, "$searchStr (%)%", "$searchStr %"];
     var sqlQuery = '''
-        SELECT * FROM channels 
+        SELECT *,
+        CASE 
+          WHEN name LIKE ? THEN 1
+          WHEN name LIKE ? THEN 1
+          WHEN name LIKE ? THEN 2
+          ELSE 3
+        END as relevance
+        FROM channels 
         WHERE (${getKeywordsSql(keywords.length)})
         AND media_type IN (${generatePlaceholders(mediaTypes.length)})
         AND source_id IN (${generatePlaceholders(filters.sourceIds!.length)})
         AND url IS NOT NULL
     ''';
     List<Object> params = [];
+    params.addAll(relevanceParams);
     if (filters.viewType == ViewType.favorites && filters.seriesId == null) {
       sqlQuery += "\nAND favorite = 1";
     }
@@ -199,8 +215,18 @@ class Sql {
     }
     if (filters.seriesId != null) {
       sqlQuery += "\nAND series_id = ?";
+      if (filters.season != null) {
+        sqlQuery += "\nAND season = ?";
+      }
     } else if (filters.groupId != null) {
       sqlQuery += "\nAND group_id = ?";
+    }
+    if (filters.viewType != ViewType.history) {
+      if (filters.seriesId != null) {
+        sqlQuery += "\nORDER BY episode_num ASC, relevance ASC, name ASC";
+      } else {
+        sqlQuery += "\nORDER BY relevance ASC, name ASC";
+      }
     }
     sqlQuery += "\nLIMIT ?, ?";
     params.addAll(keywords);
@@ -208,6 +234,9 @@ class Sql {
     params.addAll(filters.sourceIds!);
     if (filters.seriesId != null) {
       params.add(filters.seriesId!);
+      if (filters.season != null) {
+        params.add(filters.season!);
+      }
     } else if (filters.groupId != null) {
       params.add(filters.groupId!);
     }
@@ -215,6 +244,31 @@ class Sql {
     params.add(pageSize);
     var results = await db.getAll(sqlQuery, params);
     return results.map(rowToChannel).toList();
+  }
+
+  static Future<List<Channel>> searchSeason(Filters filters) async {
+    var db = await DbFactory.db;
+    var offset = filters.page * pageSize - pageSize;
+    var sqlQuery = '''
+        SELECT *, MIN(id) as first_id
+        FROM channels 
+        WHERE series_id = ? AND season IS NOT NULL
+        GROUP BY season
+        ORDER BY season ASC
+        LIMIT ?, ?
+    ''';
+    var results = await db.getAll(sqlQuery, [filters.seriesId!, offset, pageSize]);
+    return results.map(seasonToChannel).toList();
+  }
+
+  static Channel seasonToChannel(Row row) {
+    return Channel(
+        id: row.columnAt(12),
+        name: "Temporada ${row.columnAt(12)}",
+        image: row.columnAt(3),
+        sourceId: row.columnAt(6),
+        favorite: false,
+        mediaType: MediaType.season);
   }
 
   static Channel rowToChannel(Row row) {
@@ -229,6 +283,8 @@ class Sql {
       favorite: row.columnAt(7) == 1,
       seriesId: row.columnAt(8),
       groupId: row.columnAt(9),
+      season: row.columnAt(12),
+      episodeNum: row.columnAt(13),
     );
   }
 
@@ -250,15 +306,25 @@ class Sql {
     var keywords = filters.useKeywords
         ? searchStr.split(" ").map((f) => "%$f%").toList()
         : ["%$searchStr%"];
+    var relevanceParams = [searchStr, "$searchStr (%)%", "$searchStr %"];
     var mediaTypes = filters.mediaTypes!.map((x) => x.index);
     var sqlQuery = '''
-        SELECT * FROM groups 
+        SELECT *,
+        CASE 
+          WHEN name LIKE ? THEN 1
+          WHEN name LIKE ? THEN 1
+          WHEN name LIKE ? THEN 2
+          ELSE 3
+        END as relevance
+        FROM groups 
         WHERE (${getKeywordsSql(keywords.length)})
         AND (media_type IS NULL OR media_type IN (${generatePlaceholders(mediaTypes.length)}))
         AND source_id IN (${generatePlaceholders(filters.sourceIds!.length)})
+        ORDER BY relevance ASC, name ASC
         LIMIT ?, ?
     ''';
     List<Object> params = [];
+    params.addAll(relevanceParams);
     params.addAll(keywords);
     params.addAll(mediaTypes);
     params.addAll(filters.sourceIds!);
