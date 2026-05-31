@@ -10,7 +10,12 @@ echo ==========================================
 echo.
 
 REM Add Flutter to PATH
-set PATH=C:\Users\hilde\Dev\flutter\bin;%PATH%
+set "LOCAL_FLUTTER=%~dp0flutter\bin"
+if exist "%LOCAL_FLUTTER%\flutter.bat" (
+    set "PATH=%LOCAL_FLUTTER%;%PATH%"
+) else (
+    set "PATH=C:\Users\hilde\Dev\flutter\bin;%PATH%"
+)
 
 REM Verificar Flutter
 where flutter >nul 2>&1
