@@ -362,3 +362,6 @@ xcuserdata/
 # Package managers
 packages/
 Package Cache/
+
+# Local Flutter SDK
+/flutter/
