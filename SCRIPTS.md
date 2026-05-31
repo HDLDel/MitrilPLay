@@ -17,6 +17,17 @@ build\windows\x64\runner\Release\open_tv.exe
 
 ---
 
+### `setup-vs.bat`
+Baixa e instala o Visual Studio Build Tools 2022 com os componentes necessários para compilar no Windows.
+
+**Uso:**
+```powershell
+.\setup-vs.bat
+```
+⚠️ Executar como Administrador
+
+---
+
 ### `cleanup-vs.bat`
 Remove o Visual Studio Build Tools e libera espaço em disco (~5-10 GB).
 
