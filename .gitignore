@@ -365,3 +365,9 @@ Package Cache/
 
 # Local Flutter SDK
 /flutter/
+
+# Angular cache
+.angular/
+
+# Players (VLC binaries)
+Players/
