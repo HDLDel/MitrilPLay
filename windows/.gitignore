@@ -215,3 +215,7 @@ xcuserdata/
 # Package managers
 packages/
 Package Cache/
+
+# Video files
+*.mp4
+*.mkv
